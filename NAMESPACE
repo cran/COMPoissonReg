@@ -1,0 +1,1 @@
+export(CMP.MSE,CMPParamBoot,CMPStdErrors,ComputeBetasAndNuHat,ComputeBetasAndlogNuHat,constantCMPfitsandresids,CMPDeviance,leverage,LRT,makeCMPdata)

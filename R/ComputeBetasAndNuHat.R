@@ -19,6 +19,11 @@ ComputeBetasAndNuHat <- function(x,y,betainit,nuinit,max){
 # Determine the MLEs
    BetaNuEst <- nlminb(start=c(betainit,nuinit),minusloglike,lower = c(rep(-Inf,length(betainit)),0), upper = c(rep(Inf,length(betainit)),Inf))
    
-return(BetaNuEst)
+   if (BetaNuEst$convergence != 0) {
+	# Determine the MLEs
+	   BetaNuEst <- optim(par=c(betainit,nuinit),fn=minusloglike,control=list(maxit=1000))#$par
+   }
+   
+	return(BetaNuEst)
 }
 

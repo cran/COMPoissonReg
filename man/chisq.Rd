@@ -1,10 +1,10 @@
-\name{leverage}
-\alias{leverage}
+\name{chisq}
+\alias{chisq}
 
-\title{Leverage}
-\description{a generic function for the leverage of points used in various model fitting functions. The function invokes particular methods which depend on the class of the first argument.} 
+\title{Chi-square statistic}
+\description{a generic function for the chi-square statistic from the results of various model fitting functions. The function invokes particular methods which depend on the class of the first argument.} 
 
-\usage{ leverage(object, ...) }
+\usage{ chisq(object, ...) }
 
 \arguments{
   \item{object}{a model object}
@@ -15,7 +15,7 @@ See the documentation of the particular methods for details.
 } 
 
 \seealso{
-       \code{\link{leverage.cmp}}
+       \code{\link{chisq.cmp}}
 }
 \value{
 The form of the value returned depends on the class of its argument. See the documentation of the particular methods for details of what is produced by that method.} 

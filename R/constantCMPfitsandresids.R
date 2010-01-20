@@ -1,4 +1,4 @@
-constantCMPfitsandresids <- function(betahat,nuhat,x,y){
+constantCMPfitsandresids <- function(betahat,nuhat,x,y=0){
 
 #create vector of ones
    if(is.matrix(x)==TRUE) {onevec <- rep(1,length(x[,1]))} else onevec <- rep(1,length(x)) 

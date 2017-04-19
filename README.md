@@ -1,4 +1,0 @@
-COMPoissonReg
-=============
-
-COMPoissonReg R package

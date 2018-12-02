@@ -1,35 +1,85 @@
-# given estimates for beta, zeta, and nu, this code computes components of information matrix
-# constant dispersion parameter, nu
-# ln(lambda) = x %*% beta
-# logit(p) = w %*% zeta
+# These functions are currently not exported to users. Numerical computation
+# of the FIM seems to be potentially unstable, whether computing by
+# derivatives of the normalizing function, or explicitly programming the
+# infinite sum expressions and truncating them. Instead, we currently
+# provide variances via the Hessian from the optimizer.
 
-fim.zicmp <- function(lambda, nu, p, max = 100)
+# Compute the CMP information matrix using the exact expression, except
+# use numerical derivatives of z functions. This avoids numerical issues
+# with infinite sums.
+fim.cmp <- function(lambda, nu)
 {
-	z <- computez(lambda,nu,max=max)
-	dzdlambda <- computez.prodj(lambda, nu, max=max)/lambda
-	dzdnu <- -computez.prodlogj(lambda, nu, max=max)
-	d2zdlambda2 <- (1/lambda^2)*(computez.prodj2(lambda, nu, max=max) -
-		computez.prodj(lambda, nu, max=max))
-	d2zdnu2 <- computez.prodlogj2(lambda, nu, max=max)
-	d2zdlambdadnu <- -(1/lambda)*computez.prodjlogj(lambda, nu, max=max)
+	f <- function(theta) {
+		z_hybrid(theta[1], theta[2], take_log = TRUE)
+	}
+	hess.eps <- getOption("COMPoissonReg.hess.eps", default = 1e-2)
+	H <- hess.fwd(f, c(lambda, nu), h = hess.eps)
+	H[1,1] <- H[1,1] + cmp_expected_value(lambda, nu) / lambda^2
+	return(H)
+}
 
-	dlogzdlambda <- dzdlambda/z
-	d2logzdlambda2 <- d2zdlambda2/z - dzdlambda^2/z^2
-	dlogzdnu <- dzdnu / z
-	d2logzdnu2 <- d2zdnu2/z - dzdnu^2 / z^2
-	d2logzdlambdadnu <- d2zdlambdadnu / z - dzdnu * dzdlambda / z^2
-	meany <- (1-p)*lambda*dlogzdlambda
+# Compute the CMP information matrix using Monte Carlo. This avoids
+# issues with numerical second derivatives.
+fim.cmp.mc <- function(lambda, nu, reps)
+{
+	stopifnot(length(lambda) == 1)
+	stopifnot(length(nu) == 1)
+	grad.eps <- getOption("COMPoissonReg.grad.eps", default = 1e-5)
+
+	f <- function(theta, data) {
+		sum(dcmp(data, lambda = theta[1], nu = theta[2], log = TRUE))
+	}
+
+	FIM <- matrix(0, 2, 2)
+	x <- rcmp(reps, lambda, nu)
+	for (r in 1:reps) {
+		S <- grad.fwd(f, x = c(lambda, nu), h = grad.eps, data = x[r])
+		FIM <- FIM + S %*% t(S)
+	}
+
+	return(FIM / reps)
+}
+
+# Compute the ZICMP information matrix using the exact expression, except
+# use numerical derivatives of z functions.
+fim.zicmp <- function(lambda, nu, p)
+{
+	stopifnot(length(lambda) == 1)
+	stopifnot(length(nu) == 1)
+	stopifnot(length(p) == 1)
+
+	z <- z_hybrid(lambda, nu)
+	meany <- zicmp_expected_value(lambda, nu, p)
+	f <- function(theta) {
+		z_hybrid(theta[1], theta[2], take_log = TRUE)
+	}
 
 	FIM <- matrix(NA, 3, 3)
 	colnames(FIM) <- c("lambda", "nu", "p")
 	rownames(FIM) <- c("lambda", "nu", "p")
+
+	# The gradient and hessian of the z-like functions all have a closed
+	# form, but require some work to compute reliably. We have some code to
+	# compute the z-function itself somewhat reliably, so it's safer
+	# to use numerical derivatives here. We use forward derivatives
+	# to avoid issues at the boundary when lambda or nu is near 0.
+	grad.eps <- getOption("COMPoissonReg.grad.eps", default = 1e-5)
+	hess.eps <- getOption("COMPoissonReg.hess.eps", default = 1e-2)
+	Dlogz <- grad.fwd(f, c(lambda, nu), h = grad.eps)
+	Hlogz <- hess.fwd(f, c(lambda, nu), h = hess.eps)
+
+	dlogzdlambda <- Dlogz[1]
+	dlogzdnu <- Dlogz[2]
+	d2logzdlambda2 <- Hlogz[1,1]
+	d2logzdnu2 <- Hlogz[2,2]
+	d2logzdlambdadnu <- Hlogz[1,2]
 
 	# FIM[lambda, lambda]
 	FIM[1,1] <- (1-p)*d2logzdlambda2 - p*(1-p)*dlogzdlambda^2 / (p*(z-1)+1) + meany / lambda^2
 
 	# FIM[nu, nu]
 	FIM[2,2] <- (1-p)*d2logzdnu2 - p*(1-p)*dlogzdnu^2 / (p*(z-1)+1)
-	
+
 	# FIM[p, p]
 	FIM[3,3] <- (1/z) * (z-1)^2 / (p*(z-1) + 1) + (1 - 1/z) / (1-p)
 
@@ -48,67 +98,33 @@ fim.zicmp <- function(lambda, nu, p, max = 100)
 	return(FIM)
 }
 
-# fim.zicmp.reg <- function(x, beta, w, zeta, nu, max = 100)
-# {
-# 	n <- nrow(x)
-# 	qq <- ncol(x) + 1 + ncol(w)
-# 	lambda <- as.numeric(exp(x %*% beta))
-# 	p <- as.numeric(plogis(w %*% zeta))
-# 
-# 	z <- computez(lambda, nu, max=max)
-# 	dzdlambda <- computez.prodj(lambda, nu, max=max) / lambda
-# 	dzdnu <- -computez.prodlogj(lambda, nu, max=max)
-# 	d2zdlambda2 <- (1/lambda^2)*(computez.prodj2(lambda, nu, max=max) -
-# 		computez.prodj(lambda, nu, max=max))
-# 	d2zdnu2 <- computez.prodlogj2(lambda, nu, max=max)
-# 	d2zdlambdadnu <- -(1/lambda)*computez.prodjlogj(lambda, nu, max=max)
-# 
-# 	dlogzdlambda <- dzdlambda/z
-# 	d2logzdlambda2 <- d2zdlambda2/z - dzdlambda^2/z^2
-# 	dlogzdnu <- dzdnu / z
-# 	d2logzdnu2 <- d2zdnu2/z - dzdnu^2 / z^2
-# 	d2logzdlambdadnu <- d2zdlambdadnu / z - dzdnu * dzdlambda / z^2
-# 	meany <- (1-p)*lambda*dlogzdlambda
-# 
-# 	FIM <- matrix(NA, qq, qq)
-# 	colnames(FIM) <- c(sprintf("beta%d", 1:length(beta)), "nu", sprintf("zeta%d", 1:length(zeta)))
-# 	rownames(FIM) <- colnames(FIM)
-# 
-# 	idx.beta <- 1:length(beta)
-# 	idx.nu <- 1 + length(beta)
-# 	idx.zeta <- 1:length(zeta) + 1 + length(beta)
-# 
-# 	# FIM[beta, beta]
-# 	D <- (1-p)*d2logzdlambda2 - p*(1-p)*dlogzdlambda^2 / (p*(z-1)+1) + meany / lambda^2
-# 	FIM[idx.beta, idx.beta] <- t(x) %*% ((D * lambda^2) * x)
-# 
-# 	# FIM[nu, nu]
-# 	D <- (1-p)*d2logzdnu2 - p*(1-p)*dlogzdnu^2 / (p*(z-1)+1)
-# 	FIM[idx.nu, idx.nu] <- sum(D)
-# 
-# 	# FIM[zeta, zeta]
-# 	D <- (1/z) * (z-1)^2 / (p*(z-1) + 1) + (1 - 1/z) / (1-p)
-# 	FIM[idx.zeta, idx.zeta] <- t(w) %*% ((D * p^2*(1-p)^2) * w)
-# 
-# 	# FIM[beta, nu]
-# 	D <- (1-p)*d2logzdlambdadnu - p*(1-p)*dlogzdlambda*dlogzdnu / (p*(z-1) + 1)
-# 	FIM[idx.beta, idx.nu] <- matrix(1, 1, n) %*% ((D * lambda) * x)
-# 	FIM[idx.nu, idx.beta] <- FIM[idx.beta, idx.nu]
-# 
-# 	# FIM[zeta, nu]
-# 	D <- -1/(p*(z-1) + 1) * dlogzdnu
-# 	FIM[idx.zeta, idx.nu] <- matrix(1, 1, n) %*% (D * p*(1-p) * w)
-# 	FIM[idx.nu, idx.zeta] <- FIM[idx.zeta, idx.nu]
-# 
-# 	# FIM[beta, zeta]
-# 	D <- -1/(p*(z-1) + 1) * dlogzdlambda
-# 	FIM[idx.zeta, idx.beta] <- t(w) %*% (D * lambda * p*(1-p) * x)
-# 	FIM[idx.beta, idx.zeta] <- t(FIM[idx.zeta, idx.beta])
-# 	
-# 	return(FIM)
-# }
+# Compute the ZICMP information matrix using Monte Carlo.
+fim.zicmp.mc <- function(lambda, nu, p, reps)
+{
+	stopifnot(length(lambda) == 1)
+	stopifnot(length(nu) == 1)
+	stopifnot(length(p) == 1)
+	grad.eps <- getOption("COMPoissonReg.grad.eps", default = 1e-5)
 
-fim.zicmp.reg <- function(X, S, W, beta, gamma, zeta, max = 100)
+	f <- function(theta, data) {
+		sum(dzicmp(data, lambda = theta[1], nu = theta[2], p = theta[3], log = TRUE))
+	}
+
+	FIM <- matrix(0, 3, 3)
+	x <- rzicmp(reps, lambda, nu, p)
+	for (r in 1:reps) {
+		S <- grad.fwd(f, x = c(lambda, nu, p), h = grad.eps, data = x[r])
+		FIM <- FIM + S %*% t(S)
+	}
+
+	return(FIM / reps)
+}
+
+# Compute the ZICMP information matrix when parameterized by regressions.
+# If reps is NULL, attempt to use the exact expression (with numerical
+# derivatives). Otherwise, use Monte Carlo approximation based on that
+# many reps.
+fim.zicmp.reg <- function(X, S, W, beta, gamma, zeta, reps = NULL)
 {
 	n <- nrow(X)
 	qq <- ncol(X) + ncol(S) + ncol(W)
@@ -116,63 +132,54 @@ fim.zicmp.reg <- function(X, S, W, beta, gamma, zeta, max = 100)
 	nu <- as.numeric(exp(S %*% gamma))
 	p <- as.numeric(plogis(W %*% zeta))
 
-	z <- computez(lambda, nu, max=max)
-	dzdlambda <- computez.prodj(lambda, nu, max=max) / lambda
-	dzdnu <- -computez.prodlogj(lambda, nu, max=max)
-	d2zdlambda2 <- (1/lambda^2)*(computez.prodj2(lambda, nu, max=max) -
-		computez.prodj(lambda, nu, max=max))
-	d2zdnu2 <- computez.prodlogj2(lambda, nu, max=max)
-	d2zdlambdadnu <- -(1/lambda)*computez.prodjlogj(lambda, nu, max=max)
-
-	dlogzdlambda <- dzdlambda/z
-	d2logzdlambda2 <- d2zdlambda2/z - dzdlambda^2/z^2
-	dlogzdnu <- dzdnu / z
-	d2logzdnu2 <- d2zdnu2/z - dzdnu^2 / z^2
-	d2logzdlambdadnu <- d2zdlambdadnu / z - dzdnu * dzdlambda / z^2
-	meany <- (1-p)*lambda*dlogzdlambda
-
-	FIM <- matrix(NA, qq, qq)
-	colnames(FIM) <- c(sprintf("beta%d", 1:length(beta)),
+	FIM <- matrix(0, qq, qq)
+	colnames(FIM) <- c(
+		sprintf("beta%d", 1:length(beta)),
 		sprintf("gamma%d", 1:length(gamma)),
 		sprintf("zeta%d", 1:length(zeta)))
 	rownames(FIM) <- colnames(FIM)
+
+	# Compute the FIM with respect to each (lambda, nu, p), then
+	# transform to the FIM of (beta, gamma, zeta)
+	FIM.one.list <- list()
+	for (i in 1:n) {
+		if (is.null(reps)) {
+			FIM.one.list[[i]] <- fim.zicmp(lambda[i], nu[i], p[i])
+		} else {
+			FIM.one.list[[i]] <- fim.zicmp.mc(lambda[i], nu[i], p[i], reps)
+		}
+	}
 
 	idx.beta <- 1:length(beta)
 	idx.gamma <- 1:length(gamma) + length(beta)
 	idx.zeta <- 1:length(zeta) + length(gamma) + length(beta)
 
 	# FIM[beta, beta]
-	D <- (1-p)*d2logzdlambda2 - p*(1-p)*dlogzdlambda^2 / (p*(z-1)+1) + meany / lambda^2
+	D <- unlist(Map(function(x) { x[1,1] }, FIM.one.list))
 	FIM[idx.beta, idx.beta] <- t(X) %*% ((D * lambda^2) * X)
 
 	# FIM[gamma, gamma]
-	D <- (1-p)*d2logzdnu2 - p*(1-p)*dlogzdnu^2 / (p*(z-1)+1)
+	D <- unlist(Map(function(x) { x[2,2] }, FIM.one.list))
 	FIM[idx.gamma, idx.gamma] <- t(S) %*% ((D * nu^2) * S)
 
 	# FIM[zeta, zeta]
-	D <- (1/z) * (z-1)^2 / (p*(z-1) + 1) + (1 - 1/z) / (1-p)
+	D <- unlist(Map(function(x) { x[3,3] }, FIM.one.list))
 	FIM[idx.zeta, idx.zeta] <- t(W) %*% ((D * p^2*(1-p)^2) * W)
 
 	# FIM[beta, gamma]
-	D <- (1-p)*d2logzdlambdadnu - p*(1-p)*dlogzdlambda*dlogzdnu / (p*(z-1) + 1)
+	D <- unlist(Map(function(x) { x[1,2] }, FIM.one.list))
 	FIM[idx.beta, idx.gamma] <- t(X) %*% (D * lambda * nu * S)
 	FIM[idx.gamma, idx.beta] <- t(FIM[idx.beta, idx.gamma])
 
 	# FIM[zeta, gamma]
-	D <- -1/(p*(z-1) + 1) * dlogzdnu
+	D <- unlist(Map(function(x) { x[3,2] }, FIM.one.list))
 	FIM[idx.zeta, idx.gamma] <- t(W) %*% (D * p*(1-p) * nu * S)
 	FIM[idx.gamma, idx.zeta] <- t(FIM[idx.zeta, idx.gamma])
 
 	# FIM[beta, zeta]
-	D <- -1/(p*(z-1) + 1) * dlogzdlambda
+	D <- unlist(Map(function(x) { x[1,3] }, FIM.one.list))
 	FIM[idx.zeta, idx.beta] <- t(W) %*% (D * lambda * p*(1-p) * X)
 	FIM[idx.beta, idx.zeta] <- t(FIM[idx.zeta, idx.beta])
 
 	return(FIM)
-}
-
-var.zicmp.reg <- function(X, S, W, beta, gamma, zeta, max = 100)
-{
-	FIM <- fim.zicmp.reg(X, S, W, beta, gamma, zeta, max)
-	solve(FIM)
 }

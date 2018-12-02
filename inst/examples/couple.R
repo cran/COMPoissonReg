@@ -8,6 +8,9 @@ cmp.out <- glm.cmp(formula.lambda = UPB ~ EDUCATION + ANXIETY,
 	data = couple)
 print(cmp.out)
 
+vcov(cmp.out)
+sdev(cmp.out)
+
 equitest(cmp.out)
 
 res <- resid(cmp.out, type = "quantile")

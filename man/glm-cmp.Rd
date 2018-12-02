@@ -14,6 +14,7 @@
 \alias{residuals.zicmp}
 \alias{sdev.zicmp}
 \alias{summary.zicmp}
+\alias{vcov.zicmp}
 
 \alias{AIC.cmp}
 \alias{BIC.cmp}
@@ -30,6 +31,7 @@
 \alias{residuals.cmp}
 \alias{sdev.cmp}
 \alias{summary.cmp}
+\alias{vcov.cmp}
 
 \title{COM-Poisson and Zero-Inflated COM-Poisson regression}
 \description{Fit COM-Poisson regression using maximum likelihood estimation.
@@ -65,7 +67,7 @@ log p_i = w_i^T zeta.
 
 \usage{
 	glm.cmp(formula.lambda, formula.nu = ~ 1, formula.p = NULL,
-        beta.init = NULL, gamma.init = NULL, zeta.init = NULL, max = 100, ...)
+        beta.init = NULL, gamma.init = NULL, zeta.init = NULL, ...)
 
 	\method{AIC}{cmp}(object, ..., k = 2)
 	\method{BIC}{cmp}(object, ...)
@@ -81,7 +83,7 @@ log p_i = w_i^T zeta.
 	\method{residuals}{cmp}(object, type = c("raw", "quantile"), ...)
 	\method{sdev}{cmp}(object, ...)
 	\method{summary}{cmp}(object, ...)
-
+	\method{vcov}{cmp}(object, ...)
 
 	\method{AIC}{zicmp}(object, ..., k = 2)
 	\method{BIC}{zicmp}(object, ...)
@@ -97,6 +99,7 @@ log p_i = w_i^T zeta.
 	\method{residuals}{zicmp}(object, type = c("raw", "quantile"), ...)
 	\method{sdev}{zicmp}(object, ...)
 	\method{summary}{zicmp}(object, ...)
+	\method{vcov}{zicmp}(object, ...)
 }
 
 \arguments{
@@ -106,7 +109,6 @@ log p_i = w_i^T zeta.
   \item{beta.init}{initial values for regression coefficients of \code{lambda}.}
   \item{gamma.init}{initial values for regression coefficients of \code{nu}.}
   \item{zeta.init}{initial values for regression coefficients of \code{p}.}
-  \item{max}{maximum number to use for truncating infinite sums.}
   \item{...}{other model parameters, such as data}
   \item{object}{object of type 'cmp' or 'zicmp'.}
   \item{x}{object of type 'cmp' or 'zicmp'.}

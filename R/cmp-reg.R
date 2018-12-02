@@ -4,6 +4,7 @@ summary.cmp <- function(object, ...)
 	d1 <- ncol(object$X)
 	d2 <- ncol(object$S)
 
+	V <- vcov(object)
 	est <- coef(object)
 	se <- sdev(object)
 	z.val <- est / se
@@ -30,7 +31,7 @@ summary.cmp <- function(object, ...)
 	if (is.intercept.only(object$X)) {
 		est <- exp(object$beta)
 		J <- c(exp(object$beta), rep(0, d2))
-		se <- sqrt(t(J) %*% object$V %*% J)
+		se <- sqrt(t(J) %*% V %*% J)
 
 		DF.lambda <- data.frame(
 			Estimate = round(est, 4),
@@ -42,7 +43,7 @@ summary.cmp <- function(object, ...)
 	if (is.intercept.only(object$S)) {
 		est <- exp(object$gamma)
 		J <- c(rep(0, d1), exp(object$gamma))
-		se <- sqrt(t(J) %*% object$V %*% J)
+		se <- sqrt(t(J) %*% V %*% J)
 
 		DF.nu <- data.frame(
 			Estimate = round(est, 4),
@@ -52,41 +53,44 @@ summary.cmp <- function(object, ...)
 	}
 
 	list(DF = DF, DF.lambda = DF.lambda, DF.nu = DF.nu,
-		 n = n,
-		 loglik = logLik(object),
-		 aic = AIC(object),
-		 bic = BIC(object),
-		 opt.message = object$message,
-		 opt.convergence = object$convergence,
-		 elapsed.sec = object$elapsed.sec
+		n = n,
+		loglik = logLik(object),
+		aic = AIC(object),
+		bic = BIC(object),
+		opt.method = object$opt.method,
+		opt.message = object$opt.res$message,
+		opt.convergence = object$opt.res$convergence,
+		elapsed.sec = object$elapsed.sec
 	)
 }
 
 print.cmp <- function(x, ...)
 {
-	cat("Fit for CMP coefficients\n")
+	printf("CMP coefficients\n")
 	s <- summary.cmp(x)
 	tt <- equitest(x)
 	print(s$DF)
 
 	if (!is.null(s$DF.lambda) || !is.null(s$DF.nu)) {
-		cat("--\n")
-		cat("Transformed intercept-only parameters\n")
+		printf("--\n")
+		printf("Transformed intercept-only parameters\n")
 		print(rbind(s$DF.lambda, s$DF.nu))
 	}
-	cat("--\n")
-	cat("Chi-squared test for equidispersion\n")
-	cat(sprintf("X^2 = %0.4f, df = 1, ", tt$teststat))
-	cat(sprintf("p-value = %0.4e\n", tt$pvalue))
-	cat("--\n")
-	cat(sprintf("Elapsed Sec: %0.2f   ", s$elapsed.sec))
-	cat(sprintf("Sample size: %d\n", s$n))
-	cat(sprintf("LogLik: %0.4f   ", s$loglik))
-	cat(sprintf("AIC: %0.4f   ", s$aic))
-	cat(sprintf("BIC: %0.4f   ", s$bic))
-	cat("\n")
-	cat(sprintf("Converged status: %d   ", s$opt.convergence))
-	cat(sprintf("Message: %s\n", s$opt.message))
+	printf("--\n")
+	printf("Chi-squared test for equidispersion\n")
+	printf("X^2 = %0.4f, df = 1, ", tt$teststat)
+	printf("p-value = %0.4e\n", tt$pvalue)
+	printf("--\n")
+	printf("Elapsed Sec: %0.2f   ", s$elapsed.sec)
+	printf("Sample size: %d   ", s$n)
+	printf("SEs via Hessian\n")
+	printf("LogLik: %0.4f   ", s$loglik)
+	printf("AIC: %0.4f   ", s$aic)
+	printf("BIC: %0.4f   ", s$bic)
+	printf("\n")
+	printf("Optimization Method: %s   ", s$opt.method)
+	printf("Converged status: %d\n", s$opt.convergence)
+	printf("Message: %s\n", s$opt.message)
 }
 
 logLik.cmp <- function(object, ...)
@@ -117,7 +121,13 @@ nu.cmp <- function(object, ...)
 
 sdev.cmp <- function(object, ...)
 {
-	sqrt(diag(object$V))
+	sqrt(diag(vcov(object)))
+}
+
+vcov.cmp <- function(object, ...)
+{
+	# Compute the covariance via Hessian from optimizer
+	-solve(object$H)
 }
 
 equitest.cmp <- function(object, ...)
@@ -132,11 +142,10 @@ equitest.cmp <- function(object, ...)
 	lambda0 <- exp(X %*% object$beta.glm)
 	lambda <- exp(X %*% object$beta)
 	nu <- exp(S %*% object$gamma)
-	max <- object$max
 
-	z <- computez(lambda, nu, max)
+	logz <- z_hybrid(lambda, nu, take_log = TRUE)
 	teststat <- -2 * sum(y*log(lambda0) - lgamma(y+1) - lambda0 -
-		y*log(lambda) + nu*lgamma(y+1) + log(z))
+		y*log(lambda) + nu*lgamma(y+1) + logz)
 	pvalue <- pchisq(teststat, df=1, lower.tail=FALSE)
 	list(teststat = teststat, pvalue = pvalue)
 }
@@ -147,17 +156,17 @@ leverage.cmp <- function(object, ...)
 	x <- object$X
 	betahat <- object$beta
 	nuhat <- exp(object$S %*% object$gamma)
-	max <- object$max
 
 	# 1) to code the W matrix  (diagonal matrix with Var(Y_i) )
-	W <- diag(weights(x,betahat,nuhat,max))
+	W <- diag(weights(x, betahat, nuhat))
 
 	#    and X matrix (in Appendix)
-	E.y <- computez.prodj(exp(x %*% betahat),nuhat,max)/computez(exp(x %*% betahat),nuhat,max)
-	E.logfacty <- computez.prodlogj(exp(x %*% betahat),nuhat,max)/computez(exp(x %*% betahat),nuhat,max)
+	lambda.hat <- exp(x %*% betahat)
+	E.y <- z_prodj(lambda.hat, nuhat) / z_hybrid(lambda.hat, nuhat)
+	E.logfacty <- z_prodlogj(lambda.hat, nuhat) / z_hybrid(lambda.hat, nuhat)
 	extravec <- (-lgamma(y+1) + E.logfacty)/(y - E.y)
-	curlyX.mat <- cbind(x,extravec)
-	
+	curlyX.mat <- cbind(x, extravec)
+
 	# 2) to compute H using eq (12)  on p. 11
 	H1 <- t(curlyX.mat) %*% sqrt(W)
 	H2 <- solve(t(curlyX.mat) %*% W %*% curlyX.mat)
@@ -173,7 +182,6 @@ deviance.cmp <- function(object, ...)
 	x <- object$X
 	betahat <- object$beta
 	nuhat <- exp(object$S %*% object$gamma)
-	max <- object$max
 	leverage <- leverage.cmp(object)
 
 	#### Compute optimal log likelihood value for given nu-hat value
@@ -188,7 +196,7 @@ deviance.cmp <- function(object, ...)
 			beta <- par[1:length(betainit)]
 			lambda <- exp(x[i,] %*% beta)
 			ll <- y[i]*log(lambda) - nuhat[i]*lgamma(y[i]+1) -
-				log(computez(lambda, nuhat[i], max))
+				z_hybrid(lambda, nuhat[i], take_log = TRUE)
 			return(ll)
 		}
 		
@@ -200,7 +208,7 @@ deviance.cmp <- function(object, ...)
 
 	#### Compute exact deviances
 	lambdahat <- exp(x %*% betahat)
-	OptimalLogL.mu <- (y*log(lambdahat)) - (nuhat * lgamma(y+1)) - log(computez(lambdahat,nuhat,max))
+	OptimalLogL.mu <- (y*log(lambdahat)) - (nuhat * lgamma(y+1)) - z_hybrid(lambdahat,nuhat,take_log = TRUE)
 	OptimalLogL.y <- OptimalLogLi
 	d <- -2*(OptimalLogL.mu - OptimalLogL.y)
 	cmpdev <- d/(sqrt(1-leverage))
@@ -219,8 +227,7 @@ residuals.cmp <- function(object, type = c("raw", "quantile"), ...)
 	if (type == "raw") {
 		res <- object$y - y.hat
 	} else if (type == "quantile") {
-		set.seed(1234)
-		res <- rqres.cmp(object$y, lambda = lambda.hat, nu = nu.hat, max = object$max)
+		res <- rqres.cmp(object$y, lambda = lambda.hat, nu = nu.hat)
 	} else {
 		stop("Unsupported residual type")
 	}
@@ -259,7 +266,6 @@ parametric_bootstrap.cmp <- function(object, reps = 1000, report.period = reps+1
 	betahat <- object$beta
 	lambdahat <- exp(X %*% betahat)
 	nuhat <- exp(object$S %*% object$gamma)
-	max <- object$max
 
 	# Generate 1000 samples, using betahat and nuhat from full dataset
 	Ystar <- matrix(0, nrow = nrow(X), ncol = reps)
@@ -271,10 +277,10 @@ parametric_bootstrap.cmp <- function(object, reps = 1000, report.period = reps+1
 		if (i %% report.period == 0) {
 			logger("Starting bootstrap rep %d\n", i)
 		}
-		Ystar[,i] <- rcmp(nrow(X), lambdahat, nuhat, max = max)
+		Ystar[,i] <- rcmp(nrow(X), lambdahat, nuhat)
 		tryCatch({
 			res <- fit.cmp.reg(y = Ystar[,i], X = X, S = S,
-			   beta.init = poissonest, gamma.init = object$gamma, max = object$max)
+			   beta.init = poissonest, gamma.init = object$gamma)
 			boot.out[i,] <- unlist(res$theta.hat)
 		}, error = function(e) {
 			# Do nothing now; emit a warning later
@@ -300,12 +306,13 @@ constantCMPfitsandresids <- function(lambdahat, nuhat, y=0)
 	list(fit = fit, resid = resid)
 }
 
-weights <- function(x,beta,nu,max)
+weights <- function(x, beta, nu)
 {
 	# Compute the parts that comprise the weight functions
-	w1 <- computez.prodj2(exp(x %*% beta),nu,max)
-	w2 <- computez.prodj(exp(x %*% beta),nu,max)
-	w3 <- computez(exp(x %*% beta),nu,max)
+	lambda <- exp(x %*% beta)
+	w1 <- z_prodj2(lambda, nu)
+	w2 <- z_prodj(lambda, nu)
+	w3 <- z_hybrid(lambda, nu)
 
 	Ey2 <- w1/w3
 	E2y <- (w2/w3)^2

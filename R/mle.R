@@ -1,5 +1,4 @@
-fit.zicmp.reg <- function(y, X, S, W, beta.init, gamma.init, zeta.init,
-	max, optim.control = list(maxit = 150))
+fit.zicmp.reg <- function(y, X, S, W, beta.init, gamma.init, zeta.init)
 {
 	start <- Sys.time()
 	u <- as.integer(y == 0)
@@ -12,6 +11,12 @@ fit.zicmp.reg <- function(y, X, S, W, beta.init, gamma.init, zeta.init,
 	if (is.null(beta.init)) { beta.init <- rep(0, d1) }
 	if (is.null(gamma.init)) { gamma.init <- rep(0, d2) }
 	if (is.null(zeta.init)) { zeta.init <- rep(0, d3) }
+	stopifnot(d1 == length(beta.init))
+	stopifnot(d2 == length(gamma.init))
+	stopifnot(d3 == length(zeta.init))
+
+	optim.method <- getOption("COMPoissonReg.optim.method")
+	optim.control <- getOption("COMPoissonReg.optim.control")
 
 	tx <- function(par) {
 		list(
@@ -26,44 +31,40 @@ fit.zicmp.reg <- function(y, X, S, W, beta.init, gamma.init, zeta.init,
 		lambda <- exp(X %*% theta$beta)
 		nu <- exp(S %*% theta$gamma)
 		p <- plogis(W %*% theta$zeta)
-		z <- computez(lambda, nu, max)
-
-		t(u) %*% log(p*z + (1-p)) + t(1 - u) %*% (log(1-p) +
-			y*log(lambda) - nu*lgamma(y+1)) - sum(log(z))
+		logz <- z_hybrid(lambda, nu, take_log = TRUE)
+		t(u) %*% log(p*exp(logz) + (1-p)) + t(1 - u) %*% (log(1-p) +
+			y*log(lambda) - nu*lgamma(y+1)) - sum(logz)
 	}
 
 	optim.control$fnscale = -1
 	par.init <- c(beta.init, gamma.init, zeta.init)
-	res <- optim(par.init, loglik, method = 'L-BFGS-B',
+	res <- optim(par.init, loglik, method = optim.method,
 		control = optim.control, hessian = TRUE)
-	H <- res$hessian
 
 	theta.hat <- list(
 		beta = res$par[1:d1],
 		gamma = res$par[1:d2 + d1],
 		zeta = res$par[1:d3 + d1 + d2]
 	)
+	names(theta.hat$beta) <- sprintf("X:%s", colnames(X))
+	names(theta.hat$gamma) <- sprintf("S:%s", colnames(S))
+	names(theta.hat$zeta) <- sprintf("W:%s", colnames(W))
 
-	FIM <- fim.zicmp.reg(X, S, W, theta.hat$beta, theta.hat$gamma,
-		theta.hat$zeta, max = max)
-	V <- solve(FIM)
-
-	lambda.hat <- exp(X %*% theta.hat$beta)
-	nu.hat <- exp(S %*% theta.hat$gamma)
-	p.hat <- plogis(W %*% theta.hat$zeta)
-	mu.hat <- expected.y(lambda.hat, nu.hat, p.hat, max)
-	mse <- mean( (y - mu.hat)^2 )
+	H <- res$hessian
+	colnames(H) <- rownames(H) <- c(
+		sprintf("X:%s", colnames(X)),
+		sprintf("S:%s", colnames(S)),
+		sprintf("W:%s", colnames(W)))
 
 	loglik <- res$value
 	elapsed.sec <- as.numeric(Sys.time() - start, type = "sec")
 
-	res <- list(theta.hat = theta.hat, V = V, H = H, FIM = FIM, opt.res = res,
+	res <- list(theta.hat = theta.hat, H = H, opt.res = res,
 		elapsed.sec = elapsed.sec, loglik = loglik, n = n)
 	return(res)
 }
 
-fit.cmp.reg <- function(y, X, S, beta.init, gamma.init,
-	max, optim.control = list(maxit = 150))
+fit.cmp.reg <- function(y, X, S, beta.init, gamma.init)
 {
 	start <- Sys.time()
 	u <- as.integer(y == 0)
@@ -74,6 +75,11 @@ fit.cmp.reg <- function(y, X, S, beta.init, gamma.init,
 
 	if (is.null(beta.init)) { beta.init <- rep(0, d1) }
 	if (is.null(gamma.init)) { gamma.init <- rep(0, d2) }
+	stopifnot(d1 == length(beta.init))
+	stopifnot(d2 == length(gamma.init))
+
+	optim.method <- getOption("COMPoissonReg.optim.method")
+	optim.control <- getOption("COMPoissonReg.optim.control")
 
 	tx <- function(par) {
 		list(
@@ -86,43 +92,37 @@ fit.cmp.reg <- function(y, X, S, beta.init, gamma.init,
 		theta <- tx(par)
 		lambda <- exp(X %*% theta$beta)
 		nu <- exp(S %*% theta$gamma)
-		z <- computez(lambda, nu, max)
-		sum(y*log(lambda) - nu*lgamma(y+1) - log(z))
+		logz <- z_hybrid(lambda, nu, take_log = TRUE)
+		sum(y*log(lambda) - nu*lgamma(y+1) - logz)
 	}
 
 	optim.control$fnscale = -1
 	par.init <- c(beta.init, gamma.init)
-	res <- optim(par.init, loglik, method = 'L-BFGS-B',
+
+	res <- optim(par.init, loglik, method = optim.method,
 		control = optim.control, hessian = TRUE)
-	H <- res$hessian
 
 	theta.hat <- list(
 		beta = res$par[1:d1],
 		gamma = res$par[1:d2 + d1]
 	)
+	names(theta.hat$beta) <- sprintf("X:%s", colnames(X))
+	names(theta.hat$gamma) <- sprintf("S:%s", colnames(S))
 
-	W <- matrix(1, n, 1)
-	FIM.full <- fim.zicmp.reg(X, S, W = W, theta.hat$beta, theta.hat$gamma,
-		zeta = -Inf, max = max)
-	FIM <- FIM.full[1:(d1+d2), 1:(d1+d2)]
-	V <- solve(FIM)
-
-	lambda.hat <- exp(X %*% theta.hat$beta)
-	nu.hat <- exp(S %*% theta.hat$gamma)
-	p.hat <- 0
-	mu.hat <- expected.y(lambda.hat, nu.hat, p.hat, max)
-	mse <- mean( (y - mu.hat)^2 )
+	H <- res$hessian
+	colnames(H) <- rownames(H) <- c(
+		sprintf("X:%s", colnames(X)),
+		sprintf("S:%s", colnames(S)))
 
 	loglik <- res$value
 	elapsed.sec <- as.numeric(Sys.time() - start, type = "sec")
 
-	res <- list(theta.hat = theta.hat, V = V, H = H, FIM = FIM, opt.res = res,
+	res <- list(theta.hat = theta.hat, H = H, opt.res = res,
 		elapsed.sec = elapsed.sec, loglik = loglik, n = n)
 	return(res)
 }
 
-fit.zip.reg <- function(y, X, W, beta.init, zeta.init,
-	max, optim.control = list(maxit = 150))
+fit.zip.reg <- function(y, X, W, beta.init, zeta.init)
 {
 	start <- Sys.time()
 	u <- as.integer(y == 0)
@@ -133,6 +133,11 @@ fit.zip.reg <- function(y, X, W, beta.init, zeta.init,
 
 	if (is.null(beta.init)) { beta.init <- rep(0, d1) }
 	if (is.null(zeta.init)) { zeta.init <- rep(0, d3) }
+	stopifnot(d1 == length(beta.init))
+	stopifnot(d3 == length(zeta.init))
+
+	optim.method <- getOption("COMPoissonReg.optim.method")
+	optim.control <- getOption("COMPoissonReg.optim.control")
 
 	tx <- function(par) {
 		list(
@@ -151,45 +156,23 @@ fit.zip.reg <- function(y, X, W, beta.init, zeta.init,
 
 	optim.control$fnscale = -1
 	par.init <- c(beta.init, zeta.init)
-	res <- optim(par.init, loglik, method = 'L-BFGS-B',
+	res <- optim(par.init, loglik, method = optim.method,
 		control = optim.control, hessian = TRUE)
-	H <- res$hessian
 
 	theta.hat <- list(
 		beta = res$par[1:d1],
 		zeta = res$par[1:d3 + d1]
 	)
 
-	FIM <- fim.zicmp.reg(X, S = matrix(1, n, 1), W, theta.hat$beta,
-		gamma = 0, theta.hat$zeta, max = max)
-	V <- solve(FIM)
-
-	lambda.hat <- exp(X %*% theta.hat$beta)
-	nu.hat <- rep(0, n)
-	p.hat <- plogis(W %*% theta.hat$zeta)
-	mu.hat <- expected.y(lambda.hat, nu.hat, p.hat, max)
-	mse <- mean( (y - mu.hat)^2 )
+	H <- res$hessian
+	colnames(H) <- rownames(H) <- c(
+		sprintf("X:%s", colnames(X)),
+		sprintf("W:%s", colnames(W)))
 
 	loglik <- res$value
 	elapsed.sec <- as.numeric(Sys.time() - start, type = "sec")
 
-	res <- list(theta.hat = theta.hat, V = V, H = H, FIM = FIM, opt.res = res,
+	res <- list(theta.hat = theta.hat, H = H, opt.res = res,
 		elapsed.sec = elapsed.sec, loglik = loglik, n = n)
 	return(res)
-}
-
-expected.y <- function(lambda, nu, p, max)
-{
-	z <- computez(lambda, nu, max=max)
-	dzdlambda <- computez.prodj(lambda, nu, max=max)/lambda
-	dlogzdlambda <- dzdlambda / z
-	(1-p) * lambda * dlogzdlambda	
-}
-
-expected.y.reg <- function(X, S, W, beta, gamma, zeta, max)
-{
-	lambda <- exp(X %*% beta)
-	nu <- exp(S %*% gamma)
-	p <- plogis(W %*% zeta)
-	expected.y(lambda, nu, p, max)
 }

@@ -1,5 +1,5 @@
 glm.cmp <- function(formula.lambda, formula.nu = ~ 1, formula.p = NULL,
-	beta.init = NULL, gamma.init = NULL, zeta.init = NULL, max = 100, ...)
+	beta.init = NULL, gamma.init = NULL, zeta.init = NULL, ...)
 {
 	# Parse formula.lambda. This one should have the response.
 	mf <- model.frame(formula.lambda, ...)
@@ -26,7 +26,6 @@ glm.cmp <- function(formula.lambda, formula.nu = ~ 1, formula.p = NULL,
 	res$y <- y
 	res$X <- X
 	res$S <- S
-	res$max <- max
 	res$beta.init <- beta.init
 	res$gamma.init <- gamma.init
 
@@ -40,31 +39,31 @@ glm.cmp <- function(formula.lambda, formula.nu = ~ 1, formula.p = NULL,
 		if (is.null(zeta.init)) { zeta.init <- rep(0, d3) }
 
 		fit.out <- fit.zicmp.reg(res$y, res$X, res$S, res$W, beta.init = beta.init,
-			gamma.init = gamma.init, zeta.init = zeta.init, max = res$max)
+			gamma.init = gamma.init, zeta.init = zeta.init)
 
 		res$zeta.init <- zeta.init
 		res$beta.glm <- coef(initial.glm)
 		res$beta <- fit.out$theta.hat$beta
 		res$gamma <- fit.out$theta.hat$gamma
 		res$zeta <- fit.out$theta.hat$zeta
-		res$FIM <- fit.out$FIM
-		res$V <- fit.out$V
+		res$H <- fit.out$H
 		res$loglik <- fit.out$loglik
 		res$opt.res <- fit.out$opt.res
+		res$opt.method <- getOption("COMPoissonReg.optim.method")
 		res$elapsed.sec <- fit.out$elapsed.sec
 
 		attr(res, "class") <- c("zicmp", attr(res, "class"))
 	} else {
 		fit.out <- fit.cmp.reg(res$y, res$X, res$S, beta.init = beta.init,
-			gamma.init = gamma.init, max = res$max)
+			gamma.init = gamma.init)
 
 		res$beta.glm <- coef(initial.glm)
 		res$beta <- fit.out$theta.hat$beta
 		res$gamma <- fit.out$theta.hat$gamma
-		res$FIM <- fit.out$FIM
-		res$V <- fit.out$V
+		res$H <- fit.out$H
 		res$loglik <- fit.out$loglik
 		res$opt.res <- fit.out$opt.res
+		res$opt.method <- getOption("COMPoissonReg.optim.method")
 		res$elapsed.sec <- fit.out$elapsed.sec
 
 		attr(res, "class") <- c("cmp", attr(res, "class"))

@@ -1,4 +1,4 @@
-52cde3db86db099c0cca4016b3b610fc *DESCRIPTION
+bbacc15e272f5bdf1d2a8a7b3ac53a13 *DESCRIPTION
 72946fcad44286be7a4d7add9a5a0a4a *NAMESPACE
 9a5ea0d281457d1c019f4d0f8848b277 *R/RcppExports.R
 99a59c7d11cb2cf1cb0e44a73e227aff *R/S3methods.R
@@ -15,7 +15,7 @@ d958419f5d16ce795dc1a816db53e687 *R/zip.R
 f37fa22398e5cbf0769c20236ed50e40 *data/couple.rda
 71bb74c12dde852e6eca0d06c4459919 *data/freight.rda
 494cf009d0882e52cc7c9492cc172add *inst/demo-rmd/demo.Rmd
-96a9ee928d2a3b3ea85caf41119906dc *inst/demo-rmd/demo.pdf
+c57781a05cf070c196e88f5e6ab24644 *inst/demo-rmd/demo.pdf
 564fb669355d2dd2bb467253f6e08f05 *inst/examples/couple.R
 61ef74bc9f114d9c39f075c0db621e6e *inst/examples/dist-cmp.R
 e6c090e4e8b1b8fa21e7e527c6e8f2f0 *inst/examples/dist-zicmp.R
@@ -38,8 +38,8 @@ e1205b9ae6417d87a7ae9ca9924349cf *man/zicmp-dist.Rd
 0d3f52f2b1a2303a8777d9f5c2c3b31c *src/RcppExports.cpp
 056326bbc78bbf8c1adbc6d147b9b317 *src/cmp.cpp
 ff710f749c7871c308437ad979fa62c4 *src/cmp.h
-684b6940a8a988c58dedf044b341e8ae *src/util.cpp
-9815d62a2c5f46e68d13599d04b97486 *src/util.h
-3762a2f95e2a16aa8d4f057e8b7f8941 *src/z-derivs.cpp
+1cc0043318ec51b2b2593941494b4a3f *src/util.cpp
+ec2eeadb7705c11b93edc1c8557532a6 *src/util.h
+46a55bf0b19bfa8b3b4a8437daa77c8c *src/z-derivs.cpp
 669788cb4317c86143b2c4a84154ab75 *src/z.cpp
 b6f95b246eaaa15dcb5ffda6e8853181 *src/zicmp.cpp

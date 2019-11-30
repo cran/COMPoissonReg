@@ -5,20 +5,20 @@ cmp_allprobs <- function(lambda, nu, tol = 1e-6, take_log = FALSE, ymax = 1e100,
     .Call(`_COMPoissonReg_cmp_allprobs`, lambda, nu, tol, take_log, ymax, normalize)
 }
 
-dcmp_cpp <- function(x, lambda, nu, tol = 1e-6, take_log = FALSE) {
-    .Call(`_COMPoissonReg_dcmp_cpp`, x, lambda, nu, tol, take_log)
+dcmp_cpp <- function(x, lambda, nu, tol = 1e-6, take_log = FALSE, ymax = 1e100) {
+    .Call(`_COMPoissonReg_dcmp_cpp`, x, lambda, nu, tol, take_log, ymax)
 }
 
-pcmp_cpp <- function(x, lambda, nu, tol = 1e-6) {
-    .Call(`_COMPoissonReg_pcmp_cpp`, x, lambda, nu, tol)
+pcmp_cpp <- function(x, lambda, nu, tol = 1e-6, ymax = 1e100) {
+    .Call(`_COMPoissonReg_pcmp_cpp`, x, lambda, nu, tol, ymax)
 }
 
-qcmp_cpp <- function(logq, lambda, nu, tol = 1e-6) {
-    .Call(`_COMPoissonReg_qcmp_cpp`, logq, lambda, nu, tol)
+qcmp_cpp <- function(logq, lambda, nu, tol = 1e-6, ymax = 1e100) {
+    .Call(`_COMPoissonReg_qcmp_cpp`, logq, lambda, nu, tol, ymax)
 }
 
-rcmp_cpp <- function(n, lambda, nu, tol = 1e-6) {
-    .Call(`_COMPoissonReg_rcmp_cpp`, n, lambda, nu, tol)
+rcmp_cpp <- function(n, lambda, nu, tol = 1e-6, ymax = 1e100) {
+    .Call(`_COMPoissonReg_rcmp_cpp`, n, lambda, nu, tol, ymax)
 }
 
 qdiscrete <- function(q, p, log_scale = FALSE) {

@@ -1,8 +1,7 @@
 Package: COMPoissonReg
 Type: Package
 Title: Conway-Maxwell Poisson (COM-Poisson) Regression
-Version: 0.6.1
-Date: 2018-12-08
+Version: 0.7.0
 Author: Kimberly Sellers <kfs7@georgetown.edu>
 	Thomas Lotze <thomas.lotze@thomaslotze.com>
 	Andrew Raim <andrew.raim@gmail.com>
@@ -20,6 +19,6 @@ LinkingTo: Rcpp
 RoxygenNote: 6.1.1
 Encoding: UTF-8
 NeedsCompilation: yes
-Packaged: 2018-12-08 18:36:59 UTC; araim
+Packaged: 2019-11-30 00:01:21 UTC; araim
 Repository: CRAN
-Date/Publication: 2018-12-09 14:30:07 UTC
+Date/Publication: 2019-11-30 06:50:16 UTC

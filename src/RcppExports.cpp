@@ -22,8 +22,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // dcmp_cpp
-Rcpp::NumericVector dcmp_cpp(const Rcpp::NumericVector& x, const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, double tol, bool take_log);
-RcppExport SEXP _COMPoissonReg_dcmp_cpp(SEXP xSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP tolSEXP, SEXP take_logSEXP) {
+Rcpp::NumericVector dcmp_cpp(const Rcpp::NumericVector& x, const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, double tol, bool take_log, double ymax);
+RcppExport SEXP _COMPoissonReg_dcmp_cpp(SEXP xSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP tolSEXP, SEXP take_logSEXP, SEXP ymaxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -32,13 +32,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< bool >::type take_log(take_logSEXP);
-    rcpp_result_gen = Rcpp::wrap(dcmp_cpp(x, lambda, nu, tol, take_log));
+    Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
+    rcpp_result_gen = Rcpp::wrap(dcmp_cpp(x, lambda, nu, tol, take_log, ymax));
     return rcpp_result_gen;
 END_RCPP
 }
 // pcmp_cpp
-Rcpp::NumericVector pcmp_cpp(const Rcpp::NumericVector& x, const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, double tol);
-RcppExport SEXP _COMPoissonReg_pcmp_cpp(SEXP xSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP tolSEXP) {
+Rcpp::NumericVector pcmp_cpp(const Rcpp::NumericVector& x, const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, double tol, double ymax);
+RcppExport SEXP _COMPoissonReg_pcmp_cpp(SEXP xSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP tolSEXP, SEXP ymaxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -46,13 +47,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(pcmp_cpp(x, lambda, nu, tol));
+    Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
+    rcpp_result_gen = Rcpp::wrap(pcmp_cpp(x, lambda, nu, tol, ymax));
     return rcpp_result_gen;
 END_RCPP
 }
 // qcmp_cpp
-Rcpp::NumericVector qcmp_cpp(const Rcpp::NumericVector& logq, const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, double tol);
-RcppExport SEXP _COMPoissonReg_qcmp_cpp(SEXP logqSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP tolSEXP) {
+Rcpp::NumericVector qcmp_cpp(const Rcpp::NumericVector& logq, const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, double tol, double ymax);
+RcppExport SEXP _COMPoissonReg_qcmp_cpp(SEXP logqSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP tolSEXP, SEXP ymaxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -60,13 +62,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(qcmp_cpp(logq, lambda, nu, tol));
+    Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
+    rcpp_result_gen = Rcpp::wrap(qcmp_cpp(logq, lambda, nu, tol, ymax));
     return rcpp_result_gen;
 END_RCPP
 }
 // rcmp_cpp
-Rcpp::NumericVector rcmp_cpp(unsigned int n, const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, double tol);
-RcppExport SEXP _COMPoissonReg_rcmp_cpp(SEXP nSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP tolSEXP) {
+Rcpp::NumericVector rcmp_cpp(unsigned int n, const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, double tol, double ymax);
+RcppExport SEXP _COMPoissonReg_rcmp_cpp(SEXP nSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP tolSEXP, SEXP ymaxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -74,7 +77,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcmp_cpp(n, lambda, nu, tol));
+    Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcmp_cpp(n, lambda, nu, tol, ymax));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -240,10 +244,10 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_COMPoissonReg_cmp_allprobs", (DL_FUNC) &_COMPoissonReg_cmp_allprobs, 6},
-    {"_COMPoissonReg_dcmp_cpp", (DL_FUNC) &_COMPoissonReg_dcmp_cpp, 5},
-    {"_COMPoissonReg_pcmp_cpp", (DL_FUNC) &_COMPoissonReg_pcmp_cpp, 4},
-    {"_COMPoissonReg_qcmp_cpp", (DL_FUNC) &_COMPoissonReg_qcmp_cpp, 4},
-    {"_COMPoissonReg_rcmp_cpp", (DL_FUNC) &_COMPoissonReg_rcmp_cpp, 4},
+    {"_COMPoissonReg_dcmp_cpp", (DL_FUNC) &_COMPoissonReg_dcmp_cpp, 6},
+    {"_COMPoissonReg_pcmp_cpp", (DL_FUNC) &_COMPoissonReg_pcmp_cpp, 5},
+    {"_COMPoissonReg_qcmp_cpp", (DL_FUNC) &_COMPoissonReg_qcmp_cpp, 5},
+    {"_COMPoissonReg_rcmp_cpp", (DL_FUNC) &_COMPoissonReg_rcmp_cpp, 5},
     {"_COMPoissonReg_qdiscrete", (DL_FUNC) &_COMPoissonReg_qdiscrete, 3},
     {"_COMPoissonReg_logsumprobs", (DL_FUNC) &_COMPoissonReg_logsumprobs, 2},
     {"_COMPoissonReg_logcumprobs", (DL_FUNC) &_COMPoissonReg_logcumprobs, 1},

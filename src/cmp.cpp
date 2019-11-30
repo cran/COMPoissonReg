@@ -11,7 +11,7 @@ Rcpp::NumericVector cmp_allprobs(double lambda, double nu, double tol,
 	std::list<double> logp_unnorm;
 
 	double delta;
-	double psi = -0.5772157;	// Euler–Mascheroni constant
+	double psi = -0.577215664901532;	// Euler–Mascheroni constant
 	double y = 0;
 	double deriv = R_PosInf;
 	while (deriv > 0 && y <= ymax) {
@@ -20,7 +20,7 @@ Rcpp::NumericVector cmp_allprobs(double lambda, double nu, double tol,
 		psi += 1 / (y+1);
 		deriv = log(lambda) - nu*psi;
 		y++;
-		
+
 		if (int(y+1) % 10000 == 0) {
 			R_CheckUserInterrupt();
 		}
@@ -35,6 +35,13 @@ Rcpp::NumericVector cmp_allprobs(double lambda, double nu, double tol,
 		if (int(y+1) % 10000 == 0) {
 			R_CheckUserInterrupt();
 		}
+	}
+
+	if (y > ymax) {
+		char msg[128];
+		sprintf(msg, "%s\n\toptions(COMPoissonReg.ymax = %g)\n",
+			"Larger values of cmp may be needed. Try increasing this setting:", ymax);
+		Rf_warning(msg);
 	}
 
 	Rcpp::NumericVector logp(logp_unnorm.begin(), logp_unnorm.end());
@@ -54,14 +61,14 @@ Rcpp::NumericVector cmp_allprobs(double lambda, double nu, double tol,
 
 Rcpp::NumericVector dcmp_cpp(const Rcpp::NumericVector& x,
 	const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu,
-	double tol, bool take_log)
+	double tol, bool take_log, double ymax)
 {
 	unsigned int n = x.size();
 	Rcpp::NumericVector fx(n);
 	fx.fill(0);
 
 	if (lambda.size() == 1 && nu.size() == 1) {
-		Rcpp::NumericVector allprobs = cmp_allprobs(lambda(0), nu(0), tol);
+		Rcpp::NumericVector allprobs = cmp_allprobs(lambda(0), nu(0), tol, false, ymax);
 		for (unsigned int i = 0; i < n; i++) {
 			if (x(i) <= allprobs.size() - 1) {
 				fx(i) = allprobs(x(i));
@@ -69,7 +76,7 @@ Rcpp::NumericVector dcmp_cpp(const Rcpp::NumericVector& x,
 		}		
 	} else if (lambda.size() == n || nu.size() == n) {
 		for (unsigned int i = 0; i < n; i++) {
-			Rcpp::NumericVector allprobs = cmp_allprobs(lambda(i), nu(i), tol);
+			Rcpp::NumericVector allprobs = cmp_allprobs(lambda(i), nu(i), tol, false, ymax);
 			if (x(i) <= allprobs.size() - 1) {
 				fx(i) = allprobs(x(i));
 			}
@@ -87,14 +94,14 @@ Rcpp::NumericVector dcmp_cpp(const Rcpp::NumericVector& x,
 
 Rcpp::NumericVector pcmp_cpp(const Rcpp::NumericVector& x,
 	const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu,
-	double tol)
+	double tol, double ymax)
 {
 	unsigned int n = x.size();
 	Rcpp::NumericVector Fx(n);
 	Fx.fill(0);
 	
 	if (lambda.size() == 1 && nu.size() == 1) {
-		Rcpp::NumericVector all_logprobs = cmp_allprobs(lambda(0), nu(0), tol, true);
+		Rcpp::NumericVector all_logprobs = cmp_allprobs(lambda(0), nu(0), tol, true, ymax);
 		Rcpp::NumericVector lcp = logcumprobs(all_logprobs);
 		for (unsigned int i = 0; i < n; i++) {
 			if (x(i) <= all_logprobs.size() - 1) {
@@ -103,7 +110,7 @@ Rcpp::NumericVector pcmp_cpp(const Rcpp::NumericVector& x,
 		}
 	} else if (lambda.size() == n && nu.size() == n) {
 		for (unsigned int i = 0; i < n; i++) {
-			Rcpp::NumericVector all_logprobs = cmp_allprobs(lambda(i), nu(i), tol, true);
+			Rcpp::NumericVector all_logprobs = cmp_allprobs(lambda(i), nu(i), tol, true, ymax);
 			Rcpp::NumericVector lcp = logcumprobs(all_logprobs);
 			if (x(i) <= all_logprobs.size() - 1) {
 				Fx(i) = lcp(x(i));
@@ -120,26 +127,24 @@ Rcpp::NumericVector pcmp_cpp(const Rcpp::NumericVector& x,
 // Work on the log-scale for stability
 Rcpp::NumericVector qcmp_cpp(const Rcpp::NumericVector& logq,
 	const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu,
-	double tol)
+	double tol, double ymax)
 {
 	unsigned int n = logq.size();
 	Rcpp::NumericVector x(n);
 	
 	if (lambda.size() == 1 && nu.size() == 1) {
-		Rcpp::NumericVector all_logprobs = cmp_allprobs(lambda(0), nu(0), tol, true);	
+		Rcpp::NumericVector all_logprobs = cmp_allprobs(lambda(0), nu(0), tol, true, ymax);	
 		for (unsigned int i = 0; i < n; i++) {
 			x(i) = qdiscrete(logq(i), all_logprobs, true);
 		}
 	} else if (lambda.size() == n && nu.size() == n) {
 		for (unsigned int i = 0; i < n; i++) {
-			Rcpp::NumericVector all_logprobs = cmp_allprobs(lambda(i), nu(i), tol, true);
+			Rcpp::NumericVector all_logprobs = cmp_allprobs(lambda(i), nu(i), tol, true, ymax);
 			x(i) = qdiscrete(logq(i), all_logprobs, true);
 		}
 	} else {
 		Rcpp::stop("lambda and nu must both have length n or 1");
 	}
-	
-
 
 	return x;
 }
@@ -147,8 +152,8 @@ Rcpp::NumericVector qcmp_cpp(const Rcpp::NumericVector& logq,
 // Produce n(i) iid draws for each lambda(i) and nu(i).
 // If n is a scalar, take n(i) to be n
 Rcpp::NumericVector rcmp_cpp(unsigned int n, const Rcpp::NumericVector& lambda,
-	const Rcpp::NumericVector& nu, double tol)
+	const Rcpp::NumericVector& nu, double tol, double ymax)
 {
 	Rcpp::NumericVector u = Rcpp::runif(n, 0.0, 1.0);
-	return qcmp_cpp(log(u), lambda, nu, tol);
+	return qcmp_cpp(log(u), lambda, nu, tol, ymax);
 }

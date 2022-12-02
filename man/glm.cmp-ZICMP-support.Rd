@@ -2,61 +2,60 @@
 % Please edit documentation in R/zicmp-reg.R
 \name{glm.cmp, ZICMP support}
 \alias{glm.cmp, ZICMP support}
-\alias{summary.zicmp}
-\alias{print.zicmp}
-\alias{logLik.zicmp}
-\alias{AIC.zicmp}
-\alias{BIC.zicmp}
-\alias{coef.zicmp}
-\alias{nu.zicmp}
-\alias{sdev.zicmp}
-\alias{vcov.zicmp}
-\alias{leverage.zicmp}
-\alias{deviance.zicmp}
-\alias{residuals.zicmp}
-\alias{predict.zicmp}
-\alias{parametric.bootstrap.zicmp}
+\alias{summary.zicmpfit}
+\alias{print.zicmpfit}
+\alias{logLik.zicmpfit}
+\alias{AIC.zicmpfit}
+\alias{BIC.zicmpfit}
+\alias{coef.zicmpfit}
+\alias{nu.zicmpfit}
+\alias{sdev.zicmpfit}
+\alias{vcov.zicmpfit}
+\alias{equitest.zicmpfit}
+\alias{deviance.zicmpfit}
+\alias{residuals.zicmpfit}
+\alias{predict.zicmpfit}
+\alias{parametric.bootstrap.zicmpfit}
 \title{Supporting Functions for ZICMP Regression}
 \usage{
-\method{summary}{zicmp}(object, ...)
+\method{summary}{zicmpfit}(object, ...)
 
-\method{print}{zicmp}(x, ...)
+\method{print}{zicmpfit}(x, ...)
 
-\method{logLik}{zicmp}(object, ...)
+\method{logLik}{zicmpfit}(object, ...)
 
-\method{AIC}{zicmp}(object, ..., k = 2)
+\method{AIC}{zicmpfit}(object, ..., k = 2)
 
-\method{BIC}{zicmp}(object, ...)
+\method{BIC}{zicmpfit}(object, ...)
 
-\method{coef}{zicmp}(object, ...)
+\method{coef}{zicmpfit}(object, type = c("vector", "list"), ...)
 
-\method{nu}{zicmp}(object, ...)
+\method{nu}{zicmpfit}(object, ...)
 
-\method{sdev}{zicmp}(object, ...)
+\method{sdev}{zicmpfit}(object, type = c("vector", "list"), ...)
 
-\method{vcov}{zicmp}(object, ...)
+\method{vcov}{zicmpfit}(object, ...)
 
-\method{leverage}{zicmp}(object, ...)
+\method{equitest}{zicmpfit}(object, ...)
 
-\method{deviance}{zicmp}(object, ...)
+\method{deviance}{zicmpfit}(object, ...)
 
-\method{residuals}{zicmp}(object, type = c("raw", "quantile"), ...)
+\method{residuals}{zicmpfit}(object, type = c("raw", "quantile"), ...)
 
-\method{predict}{zicmp}(object, newdata = NULL, ...)
+\method{predict}{zicmpfit}(object, newdata = NULL, type = c("response", "link"), ...)
 
-\method{parametric.bootstrap}{zicmp}(object, reps = 1000,
-  report.period = reps + 1, ...)
+\method{parametric.bootstrap}{zicmpfit}(object, reps = 1000, report.period = reps + 1, ...)
 }
 \arguments{
 \item{object}{object of type \code{zicmp}.}
 
-\item{...}{other model parameters, such as data.}
+\item{...}{other arguments, such as \code{subset} and \code{na.action}.}
 
 \item{x}{object of type \code{zicmp}.}
 
 \item{k}{Penalty per parameter to be used in AIC calculation.}
 
-\item{type}{Type of residual to be computed.}
+\item{type}{Specifies quantity to be computed. See details.}
 
 \item{newdata}{New covariates to be used for prediction.}
 
@@ -66,4 +65,23 @@
 }
 \description{
 Supporting Functions for ZICMP Regression
+}
+\details{
+The function \code{residuals} returns raw residuals when
+\code{type = "raw"}  and quantile residuals when
+\code{type = "quantile"}.
+
+The function \code{predict} returns expected values of the outcomes,
+eveluated at the computed estimates, when \code{type = "response"}. When
+\code{type = "link"}, a \code{data.frame} is instead returned with
+columns corresponding to estimates of \code{lambda}, \code{nu}, and
+\code{p}.
+
+The function \code{coef} returns a vector of coefficient estimates in
+the form \code{c(beta, gamma, zeta)} when \code{type = "vector"}. When
+\code{type = "list"}, the estimates are returned as a list with named
+elements \code{beta} and \code{gamma}, and \code{zeta}.
+
+The \code{type} argument behaves the same for the \code{sdev} function
+as it does for \code{coef}.
 }

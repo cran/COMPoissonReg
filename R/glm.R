@@ -1,30 +1,122 @@
-#' COM-Poisson and Zero-Inflated COM-Poisson regression
+#' Raw Interface to COM-Poisson and Zero-Inflated COM-Poisson Regression
+#' 
+#' Fit COM-Poisson and Zero-Inflated COM-Poisson regression using a "raw"
+#' interface which bypasses the formula-driven interface of \code{glm.cmp}.
+#' 
+#' @param y A vector of counts which represent the response .
+#' @param X Design matrix for the `lambda` regression.
+#' @param S Design matrix for the `nu` regression.
+#' @param W Design matrix for the `p` regression.
+#' @param offset A data structure that specifies offsets. See the helper
+#' function \link{get.offset}.
+#' @param init A data structure that specifies initial values. See the helper
+#' function \link{get.init}.
+#' @param fixed A data structure that specifies which coefficients should
+#' remain fixed in the maximum likelihood procedure. See the helper function
+#' \link{get.fixed}.
+#' @param control A control data structure. See the helper function
+#' \link{get.control}.
+#' 
+#' @return
+#' See the \link{glm.cmp}.
+#' 
+#' @name glm.cmp-raw
+NULL
+
+#' Extract model elements from a formula to use with the raw interface
+#' 
+#' @param formula.lambda regression formula linked to \code{log(lambda)}.
+#' The response should be specified here.
+#' @param formula.nu regression formula linked to \code{log(nu)}. The
+#' default, is taken to be only an intercept.
+#' @param formula.p regression formula linked to \code{logit(p)}. If NULL
+#' (the default), zero-inflation term is excluded from the model.#'
+#' @param data An optional data.frame with variables to be used with regression
+#'   formulas. Variables not found here are read from the envionment.
+#' @param ... other arguments, such as \code{subset} and \code{na.action}.
+#'
+#' @noRd
+formula2raw = function(formula.lambda, formula.nu, formula.p, data = NULL, ...)
+{
+	# Parse formula.lambda. This one should have the response.
+	mf = model.frame(formula.lambda, data, ...)
+	y = model.response(mf)
+	X = model.matrix(formula.lambda, mf)
+	off.x = model.offset(mf)
+	d1 = ncol(X)
+	n = length(y)
+
+	weights = model.weights(mf)
+	if(!is.null(weights)) {
+		stop("weights argument is currently not supported")
+	}
+
+	# Parse formula.nu
+	mf = model.frame(formula.nu, data, ...)
+	S = model.matrix(formula.nu, mf)
+	if (nrow(S) == 0) {
+		# A workaround for the case where there is no context in formula.nu
+		# about how many observations there should be. The only way this
+		# seems possible is when formula.nu = ~1
+		S = model.matrix(y ~ 1)
+	}
+	off.s = model.offset(mf)
+	d2 = ncol(S)
+
+	if (is.null(off.x)) { off.x = rep(0, n) }
+	if (is.null(off.s)) { off.s = rep(0, n) }
+
+	# If formula.p is NULL, do CMP regression. Else do ZICMP regression
+	if (is.null(formula.p)) {
+		# Run the regression using the raw interface function
+		W = matrix(0, n, 0)
+		off.w = numeric(n)
+	} else {
+		mf = model.frame(formula.p, data, ...)
+		W = model.matrix(formula.p, mf)
+		if (nrow(W) == 0) {
+			# A workaround for the case where there is no context in formula.nu
+			# about how many observations there should be. The only way this
+			# seems possible is when formula.p = ~1
+			W = model.matrix(y ~ 1)
+		}
+		d3 = ncol(W)
+		off.w = model.offset(mf)
+		if (is.null(off.w)) { off.w = rep(0, n) }
+	}
+
+	offset = get.offset(x = off.x, s = off.s, w = off.w)
+	res = list(y = y, X = X, S = S, W = W, offset = offset)
+	return(res)
+}
+
+#' COM-Poisson and Zero-Inflated COM-Poisson Regression
 #' 
 #' Fit COM-Poisson regression using maximum likelihood estimation.
 #' Zero-Inflated COM-Poisson can be fit by specifying a regression for the
 #' overdispersion parameter.
 #' 
 #' @param formula.lambda regression formula linked to \code{log(lambda)}.
-#' @param formula.nu regression formula linked to \code{log(nu)}. If NULL
-#'   (the default), is taken to be intercept only.
+#'   The response should be specified here.
+#' @param formula.nu regression formula linked to \code{log(nu)}. The
+#'   default, is taken to be only an intercept.
 #' @param formula.p regression formula linked to \code{logit(p)}. If NULL
 #'   (the default), zero-inflation term is excluded from the model.
-#' @param beta.init initial values for regression coefficients of \code{lambda}.
-#' @param gamma.init initial values for regression coefficients of \code{nu}.
-#' @param zeta.init initial values for regression coefficients of \code{p}.
-#' @param ... other model parameters, such as data.
-# @param object object of type 'cmp' or 'zicmp'.
-# @param x object of type 'cmp' or 'zicmp'.
-# @param k Penalty per parameter to be used in AIC calculation.
-# @param newdata New covariates to be used for prediction.
-# @param type Type of residual to be computed.
-# @param reps Number of bootstrap repetitions.
-# @param report.period Report progress every \code{report.period} iterations.
+#' @param data An optional data.frame with variables to be used with regression
+#'   formulas. Variables not found here are read from the envionment.
+#' @param init A data structure that specifies initial values. See the helper
+#' function \link{get.init}.
+#' @param fixed A data structure that specifies which coefficients should
+#' remain fixed in the maximum likelihood procedure. See the helper function
+#' \link{get.fixed}.
+#' @param control A control data structure. See the helper function
+#' \link{get.control}. If \code{NULL}, a global default will be used.
+#' @param ... other arguments, such as \code{subset} and \code{na.action}.
 #' 
 #' @return
-#' \code{glm.cmp} produces an object of either class 'cmp' or 'zicmp', depending
-#' on whether zero-inflation is used in the model. From this object, coefficients
-#' and other information can be extracted.
+#' \code{glm.cmp} produces an object of either class \code{cmpfit} or
+#' \code{zicmpfit}, depending on whether zero-inflation is used in the model.
+#' From this object, coefficients and other information can be extracted.
 #' 
 #' @details 
 #' The COM-Poisson regression model is
@@ -45,12 +137,12 @@
 #' y_i^* \sim \rm{CMP}(\lambda_i, \nu_i), \;\;\;
 #' \log \lambda_i = \bm{x}_i^\top \beta, \;\;\;
 #' \log \nu_i = \bm{s}_i^\top \gamma, \;\;\;
-#' \log p_i = \bm{w}_i^\top \zeta.
+#' \rm{logit} \, p_i = \bm{w}_i^\top \zeta.
 #' }{
 #' y_i^* ~ CMP(lambda_i, nu_i),
 #' log lambda_i = x_i^T beta,
 #' log nu_i = s_i^T gamma,
-#' log p_i = w_i^T zeta.
+#' logit p_i = w_i^T zeta.
 #' }
 #'
 #' @references
@@ -62,94 +154,138 @@
 #' 68-80.
 #'
 #' @author Kimberly Sellers, Thomas Lotze, Andrew Raim
-#' @name glm.cmp
+#' 
 #' @export
-glm.cmp = function(formula.lambda, formula.nu = NULL, formula.p = NULL,
-	beta.init = NULL, gamma.init = NULL, zeta.init = NULL, ...)
+glm.cmp = function(formula.lambda, formula.nu = ~ 1, formula.p = NULL,
+	data = NULL, init = NULL, fixed = NULL, control = NULL, ...)
 {
-	# Parse formula.lambda. This one should have the response.
-	mf = model.frame(formula.lambda, ...)
-	y = model.response(mf)
-	X = model.matrix(formula.lambda, mf)
-	off.x = model.offset(mf)
-	d1 = ncol(X)
 
-	# Parse formula.nu
-	if (is.null(formula.nu)) {
-		formula.nu = y ~ 1
+	raw = formula2raw(formula.lambda, formula.nu, formula.p, data, ...)
+	d3 = ncol(raw$W)
+
+	if (d3 > 0) {
+		res = glm.zicmp.raw(y = raw$y, X = raw$X, S = raw$S, W = raw$W,
+			offset = raw$offset, init = init, fixed = fixed, control = control)
+	} else {
+		res = glm.cmp.raw(y = raw$y, X = raw$X, S = raw$S, offset = raw$offset,
+			init = init, fixed = fixed, control = control)
 	}
-	mf = model.frame(formula.nu, ...)
-	S = model.matrix(formula.nu, mf)
-	off.s = model.offset(mf)
+
+	# Add formula-specific things to return object
+	res$interface = "formula"
+	res$formula.lambda = formula.lambda
+	res$formula.nu = formula.nu
+	res$formula.p = formula.p
+
+	return(res)
+}
+
+#' @name glm.cmp-raw
+#' @export
+glm.cmp.raw = function(y, X, S, offset = NULL, init = NULL, fixed = NULL, control = NULL)
+{
+	# Get dimensions
+	n = length(y)
+	d1 = ncol(X)
 	d2 = ncol(S)
 
-	n = length(y)
-	if (is.null(off.x)) { off.x = rep(0, n) }
-	if (is.null(off.s)) { off.s = rep(0, n) }
+	# Make sure design matrices have column names
+	if (is.null(colnames(X))) { colnames(X) = seq_len(d1) }
+	if (is.null(colnames(S))) { colnames(S) = seq_len(d2) }
 
-	initial.glm = glm(formula.lambda, family='poisson', ...)
-	if (is.null(beta.init)) { beta.init = coef(initial.glm) }
-	if (is.null(gamma.init)) { gamma.init = rep(0, d2) }
+	# Initialize NULL arguments
+	if (is.null(offset)) { offset = get.offset.zero(n) }
+	if (is.null(init)) { init = get.init.zero(d1, d2) }
+	if (is.null(fixed)) { fixed = get.fixed() }
+	if (is.null(control)) {
+		control = getOption("COMPoissonReg.control", default = get.control())                                                                        
+	}
 
+	# Fit the CMP regression model
+	fit.out = fit.cmp.reg(y, X, S, init = init, offset = offset, fixed = fixed,
+		control = control)
+
+	# Construct return value
 	res = list(
-		formula.lambda = formula.lambda,
-		formula.nu = formula.nu,
-		formula.p = formula.p,
 		y = y,
 		X = X,
 		S = S,
-		beta.init = beta.init,
-		gamma.init = gamma.init,
-		off.x = off.x,
-		off.s = off.s
+		init = init,
+		offset = offset,
+		beta = fit.out$theta.hat$beta,
+		gamma = fit.out$theta.hat$gamma,
+		H = fit.out$H,
+		loglik = fit.out$loglik,
+		opt.res = fit.out$opt.res,
+		control = fit.out$control,
+		elapsed.sec = fit.out$elapsed.sec,
+		fixed = fit.out$fixed,
+		unfixed = fit.out$unfixed,
+		interface = "raw"
 	)
+	attr(res, "class") = c("cmpfit", attr(res, "class"))
 
-	# Handle ZI and non-ZI cases separately.
-	if (!is.null(formula.p)) {
-		mf = model.frame(formula.p, ...)
-		W = model.matrix(formula.p, mf)
-		off.w = model.offset(mf)
-		if (is.null(off.w)) { off.w = rep(0, n) }
-		d3 = ncol(W)
-		res$W = W
-		res$off.w = off.w
-
-		if (is.null(zeta.init)) { zeta.init = rep(0, d3) }
-
-		fit.out = fit.zicmp.reg(res$y, res$X, res$S, res$W,
-			beta.init = beta.init, gamma.init = gamma.init, zeta.init = zeta.init,
-			off.x = off.x, off.s = off.s, off.w = off.w)
-
-		res$zeta.init = zeta.init
-		res$beta.glm = coef(initial.glm)
-		res$beta = fit.out$theta.hat$beta
-		res$gamma = fit.out$theta.hat$gamma
-		res$zeta = fit.out$theta.hat$zeta
-		res$H = fit.out$H
-		res$loglik = fit.out$loglik
-		res$opt.res = fit.out$opt.res
-		res$opt.method = getOption("COMPoissonReg.optim.method")
-		res$elapsed.sec = fit.out$elapsed.sec
-
-		attr(res, "class") = c("zicmp", attr(res, "class"))
-	} else {
-		fit.out = fit.cmp.reg(res$y, res$X, res$S, beta.init = beta.init,
-			gamma.init = gamma.init, off.x = off.x, off.s = off.s)
-
-		res$beta.glm = coef(initial.glm)
-		res$beta = fit.out$theta.hat$beta
-		res$gamma = fit.out$theta.hat$gamma
-		res$H = fit.out$H
-		res$loglik = fit.out$loglik
-		res$opt.res = fit.out$opt.res
-		res$opt.method = getOption("COMPoissonReg.optim.method")
-		res$elapsed.sec = fit.out$elapsed.sec
-
-		attr(res, "class") = c("cmp", attr(res, "class"))
+	# Add the equidispersion test if no elements of gamma are fixed
+	if (length(fixed$gamma) == 0) {
+		res$equitest = equitest(res)
 	}
 
-	# Add the test for equidispersion
-	res$equitest = equitest(res)
+	return(res)
+}
+
+#' @name glm.cmp-raw
+#' @export
+glm.zicmp.raw = function(y, X, S, W, offset = NULL, init = NULL, fixed = NULL, control = NULL)
+{
+	# Get dimensions
+	n = length(y)
+	d1 = ncol(X)
+	d2 = ncol(S)
+	d3 = ncol(W)
+
+	# Make sure design matrices have column names
+	if (is.null(colnames(X))) { colnames(X) = seq_len(d1) }
+	if (is.null(colnames(S))) { colnames(S) = seq_len(d2) }
+	if (is.null(colnames(W))) { colnames(W) = seq_len(d3) }
+
+	# Initialize NULL arguments
+	if (is.null(offset)) { offset = get.offset.zero(n) }
+	if (is.null(init)) { init = get.init.zero(d1, d2, d3) }
+	if (is.null(fixed)) { fixed = get.fixed() }
+	if (is.null(control)) {
+		control = getOption("COMPoissonReg.control", default = get.control())                                                                        
+	}
+
+	# Fit the ZICMP regression model
+	fit.out = fit.zicmp.reg(y, X, S, W, init = init, offset = offset,
+		fixed = fixed, control = control)
+
+	# Construct return value
+	res = list(
+		y = y,
+		X = X,
+		S = S,
+		W = W,
+		init = init,
+		offset = offset,
+		beta = fit.out$theta.hat$beta,
+		gamma = fit.out$theta.hat$gamma,
+		zeta = fit.out$theta.hat$zeta,
+		H = fit.out$H,
+		loglik = fit.out$loglik,
+		opt.res = fit.out$opt.res,
+		control = fit.out$control,
+		elapsed.sec = fit.out$elapsed.sec,
+		fixed = fit.out$fixed,
+		unfixed = fit.out$unfixed,
+		interface = "raw"
+	)
+	attr(res, "class") = c("zicmpfit", attr(res, "class"))
+
+	# Add the equidispersion test if no elements of gamma are fixed
+	if (length(fixed$gamma) == 0) {
+		res$equitest = equitest(res)
+	}
 
 	return(res)
 }

@@ -1,9 +1,24 @@
-.onAttach = function(libname, pkgname){
-	options(COMPoissonReg.optim.method = 'L-BFGS-B')
-	options(COMPoissonReg.optim.control = list(maxit = 150))
-	options(COMPoissonReg.grad.eps = 1e-5)
-	options(COMPoissonReg.hess.eps = 1e-2)
-	options(COMPoissonReg.ymax = 1e6)
+format.difftime = function(x) {
+	s = as.numeric(x, units = "secs")
+	dd = floor(s / (60^2 * 24))
+	dd.resid = s / (60^2 * 24) - dd
+	hh = floor(24*dd.resid)
+	hh.resid = 24*dd.resid - floor(24*dd.resid)
+	mm = floor(60*hh.resid)
+	mm.resid = 60*hh.resid - floor(60*hh.resid)
+	ss = floor(60*mm.resid)
+
+	if (dd > 0) {
+		fmt = sprintf("%02dd:%02dh:%02dm:%02ds", dd, hh, mm, ss)
+	} else if (hh > 0) {
+		fmt = sprintf("%02dh:%02dm:%02ds", hh, mm, ss)
+	} else if (mm > 0) {
+		fmt = sprintf("%02dm:%02ds", mm, ss)
+	} else {
+		fmt = sprintf("%0.2f sec", s)
+	}
+
+	return(fmt)
 }
 
 printf = function(msg, ...) {

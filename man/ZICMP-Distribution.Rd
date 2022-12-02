@@ -6,15 +6,21 @@
 \alias{rzicmp}
 \alias{pzicmp}
 \alias{qzicmp}
+\alias{ezicmp}
+\alias{vzicmp}
 \title{ZICMP Distribution}
 \usage{
-dzicmp(x, lambda, nu, p, log = FALSE)
+dzicmp(x, lambda, nu, p, log = FALSE, control = NULL)
 
-rzicmp(n, lambda, nu, p)
+rzicmp(n, lambda, nu, p, control = NULL)
 
-pzicmp(x, lambda, nu, p)
+pzicmp(x, lambda, nu, p, control = NULL)
 
-qzicmp(q, lambda, nu, p, log.p = FALSE)
+qzicmp(q, lambda, nu, p, log.p = FALSE, control = NULL)
+
+ezicmp(lambda, nu, p, control = NULL)
+
+vzicmp(lambda, nu, p, control = NULL)
 }
 \arguments{
 \item{x}{vector of quantiles.}
@@ -27,6 +33,9 @@ qzicmp(q, lambda, nu, p, log.p = FALSE)
 
 \item{log}{logical; if TRUE, probabilities are returned on log-scale.}
 
+\item{control}{a \code{COMPoissonReg.control} object from \code{get.control}
+or \code{NULL} to use global default.}
+
 \item{n}{number of observations.}
 
 \item{q}{vector of probabilities.}
@@ -35,10 +44,12 @@ qzicmp(q, lambda, nu, p, log.p = FALSE)
 }
 \value{
 \describe{
-\item{dzicmp}{gives the density,}
-\item{pzicmp}{gives the cumulative probability,}
-\item{qzicmp}{gives the quantile value, and}
-\item{rzicmp}{generates random numbers.}
+\item{dzicmp}{density,}
+\item{pzicmp}{cumulative probability,}
+\item{qzicmp}{quantiles,}
+\item{rzicmp}{generate random variates,}
+\item{ezicmp}{expected value. and}
+\item{vzicmp}{variance.}
 }
 }
 \description{

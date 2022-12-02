@@ -2,61 +2,63 @@
 % Please edit documentation in R/cmp-reg.R
 \name{glm.cmp, CMP support}
 \alias{glm.cmp, CMP support}
-\alias{summary.cmp}
-\alias{print.cmp}
-\alias{logLik.cmp}
-\alias{AIC.cmp}
-\alias{BIC.cmp}
-\alias{coef.cmp}
-\alias{nu.cmp}
-\alias{sdev.cmp}
-\alias{vcov.cmp}
-\alias{leverage.cmp}
-\alias{deviance.cmp}
-\alias{residuals.cmp}
-\alias{predict.cmp}
-\alias{parametric.bootstrap.cmp}
+\alias{summary.cmpfit}
+\alias{print.cmpfit}
+\alias{logLik.cmpfit}
+\alias{AIC.cmpfit}
+\alias{BIC.cmpfit}
+\alias{coef.cmpfit}
+\alias{nu.cmpfit}
+\alias{sdev.cmpfit}
+\alias{vcov.cmpfit}
+\alias{equitest.cmpfit}
+\alias{leverage.cmpfit}
+\alias{deviance.cmpfit}
+\alias{residuals.cmpfit}
+\alias{predict.cmpfit}
+\alias{parametric.bootstrap.cmpfit}
 \title{Supporting Functions for COM-Poisson Regression}
 \usage{
-\method{summary}{cmp}(object, ...)
+\method{summary}{cmpfit}(object, ...)
 
-\method{print}{cmp}(x, ...)
+\method{print}{cmpfit}(x, ...)
 
-\method{logLik}{cmp}(object, ...)
+\method{logLik}{cmpfit}(object, ...)
 
-\method{AIC}{cmp}(object, ..., k = 2)
+\method{AIC}{cmpfit}(object, ..., k = 2)
 
-\method{BIC}{cmp}(object, ...)
+\method{BIC}{cmpfit}(object, ...)
 
-\method{coef}{cmp}(object, ...)
+\method{coef}{cmpfit}(object, type = c("vector", "list"), ...)
 
-\method{nu}{cmp}(object, ...)
+\method{nu}{cmpfit}(object, ...)
 
-\method{sdev}{cmp}(object, ...)
+\method{sdev}{cmpfit}(object, type = c("vector", "list"), ...)
 
-\method{vcov}{cmp}(object, ...)
+\method{vcov}{cmpfit}(object, ...)
 
-\method{leverage}{cmp}(object, ...)
+\method{equitest}{cmpfit}(object, ...)
 
-\method{deviance}{cmp}(object, ...)
+\method{leverage}{cmpfit}(object, ...)
 
-\method{residuals}{cmp}(object, type = c("raw", "quantile"), ...)
+\method{deviance}{cmpfit}(object, ...)
 
-\method{predict}{cmp}(object, newdata = NULL, ...)
+\method{residuals}{cmpfit}(object, type = c("raw", "quantile"), ...)
 
-\method{parametric.bootstrap}{cmp}(object, reps = 1000,
-  report.period = reps + 1, ...)
+\method{predict}{cmpfit}(object, newdata = NULL, type = c("response", "link"), ...)
+
+\method{parametric.bootstrap}{cmpfit}(object, reps = 1000, report.period = reps + 1, ...)
 }
 \arguments{
 \item{object}{object of type \code{cmp}.}
 
-\item{...}{other model parameters, such as data.}
+\item{...}{other arguments, such as \code{subset} and \code{na.action}.}
 
 \item{x}{object of type \code{cmp}.}
 
 \item{k}{Penalty per parameter to be used in AIC calculation.}
 
-\item{type}{Type of residual to be computed.}
+\item{type}{Specifies quantity to be computed. See details.}
 
 \item{newdata}{New covariates to be used for prediction.}
 
@@ -66,4 +68,22 @@
 }
 \description{
 Supporting Functions for COM-Poisson Regression
+}
+\details{
+The function \code{residuals} returns raw residuals when
+\code{type = "raw"}  and quantile residuals when
+\code{type = "quantile"}.
+
+The function \code{predict} returns expected values of the outcomes,
+eveluated at the computed estimates, when \code{type = "response"}. When
+\code{type = "link"}, a \code{data.frame} is instead returned with
+columns corresponding to estimates of \code{lambda} and \code{nu}.
+
+The function \code{coef} returns a vector of coefficient estimates in
+the form \code{c(beta, gamma)} when \code{type = "vector"}. When
+\code{type = "list"}, the estimates are returned as a list with named
+elements \code{beta} and \code{gamma}.
+
+The \code{type} argument behaves the same for the \code{sdev} function
+as it does for \code{coef}.
 }

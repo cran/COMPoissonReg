@@ -1,159 +1,137 @@
-#include <Rcpp.h>
-#include <list>
 #include "cmp.h"
+#include <algorithm>
+#include <vector>
+#include "z.h"
 #include "util.h"
 
-// Enumerate the terms lambda^y / (y!)^nu for y >= 0, until they become small,
-// or until y = ymax is reached.
-Rcpp::NumericVector cmp_allprobs(double lambda, double nu, double tol,
-	bool take_log, double ymax, bool normalize)
+double loglik_cmp(const Rcpp::NumericVector& x,
+	const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu,
+	double hybrid_tol, double truncate_tol, double ymax)
 {
-	std::list<double> logp_unnorm;
+	unsigned int n = x.size();
+	double out = 0;
 
-	double delta;
-	double psi = -0.577215664901532;	// Euler–Mascheroni constant
-	double y = 0;
-	double deriv = R_PosInf;
-	while (deriv > 0 && y <= ymax) {
-		delta = y*log(lambda) - nu*lgamma(y+1);
-		logp_unnorm.push_back(delta);
-		psi += 1 / (y+1);
-		deriv = log(lambda) - nu*psi;
-		y++;
-
-		if (int(y+1) % 10000 == 0) {
-			R_CheckUserInterrupt();
-		}
+	for (unsigned int i = 0; i < n; i++) {
+		Rcpp::NumericVector lp_vec = d_cmp(Rcpp::NumericVector::create(x(i)),
+			lambda(i), nu(i), true, true, hybrid_tol, truncate_tol, ymax);
+		out += lp_vec(0);
 	}
 
-	double log_tol = log(tol);
-	while (delta > log_tol && y <= ymax) {
-		delta = y*log(lambda) - nu*lgamma(y+1);
-		logp_unnorm.push_back(delta);
-		y++;
+	return out;
+}
 
-		if (int(y+1) % 10000 == 0) {
-			R_CheckUserInterrupt();
-		}
+Rcpp::NumericVector d_cmp(const Rcpp::NumericVector& x, double lambda, double nu,
+	bool take_log, bool normalize, double hybrid_tol, double truncate_tol, double ymax)
+{
+	unsigned int n = x.size();
+
+	Rcpp::NumericVector out(n);
+	for (unsigned int i = 0; i < n; i++) {
+		out(i) = x(i)*log(lambda) - nu*lgamma(x(i) + 1);
 	}
 
-	if (y > ymax) {
-		char msg[128];
-		sprintf(msg, "%s\n\toptions(COMPoissonReg.ymax = %g)\n",
-			"Larger values of cmp may be needed. Try increasing this setting:", ymax);
-		Rf_warning(msg);
-	}
-
-	Rcpp::NumericVector logp(logp_unnorm.begin(), logp_unnorm.end());
-
-	// A somewhat stable way to normalize log-probabilities
 	if (normalize) {
-		unsigned int idx_max = Rcpp::which_max(logp);
-		logp = logp - logsumprobs(logp, idx_max);
+		double lnormcost = z_hybrid(lambda, nu, true, hybrid_tol, truncate_tol, ymax);
+		out = out - lnormcost;
 	}
 
 	if (take_log) {
-		return logp;
+		return out;
 	} else {
-		return exp(logp);
+		return exp(out);
 	}
 }
 
-Rcpp::NumericVector dcmp_cpp(const Rcpp::NumericVector& x,
-	const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu,
-	double tol, bool take_log, double ymax)
+Rcpp::NumericVector p_cmp(const Rcpp::NumericVector& x, double lambda, double nu,
+	double hybrid_tol, double truncate_tol, double ymax)
 {
 	unsigned int n = x.size();
-	Rcpp::NumericVector fx(n);
-	fx.fill(0);
+	Rcpp::NumericVector out(n);
+	out.fill(R_NegInf);
 
-	if (lambda.size() == 1 && nu.size() == 1) {
-		Rcpp::NumericVector allprobs = cmp_allprobs(lambda(0), nu(0), tol, false, ymax);
-		for (unsigned int i = 0; i < n; i++) {
-			if (x(i) <= allprobs.size() - 1) {
-				fx(i) = allprobs(x(i));
-			}
-		}		
-	} else if (lambda.size() == n || nu.size() == n) {
-		for (unsigned int i = 0; i < n; i++) {
-			Rcpp::NumericVector allprobs = cmp_allprobs(lambda(i), nu(i), tol, false, ymax);
-			if (x(i) <= allprobs.size() - 1) {
-				fx(i) = allprobs(x(i));
-			}
+	// Since we're using the truncated method below, we'll compute the normcost by
+	// truncation too. We can use the same call to get our upper truncation bound.
+	const std::pair<double, unsigned int>& ret_pair = truncate(lambda, nu,
+		truncate_tol, ymax);
+	double lnormconst = ret_pair.first;
+	unsigned int M = ret_pair.second;
+
+	unsigned int x_max = int(std::min(double(Rcpp::max(x)), double(M)));
+
+	for (unsigned int i = 0; i < n; i++) {
+		if (x(i) < 0) {
+			// Handle the case x(i) < 0 separately. If we wanted to include it
+			// below, we may need to take special care in logadd to make sure
+			// -Inf isn't the left operand.
+			continue;
 		}
-	} else {
-		Rcpp::stop("lambda and nu must both have length n or 1");
+
+		double lcp = -lnormconst;
+		for (unsigned int j = 1; j <= x(i) && j <= x_max; j++) {
+			// Do summation on the log-scale.
+			double lp = j*log(lambda) - nu*lgamma(j + 1) - lnormconst;
+			lcp = logadd(lcp, lp);
+
+		 	if (j % 10000 == 0) {
+		 		R_CheckUserInterrupt();
+	 		}
+		}
+		out(i) = lcp;
 	}
 
-	if (take_log) {
-		return log(fx);
-	} else {
-		return fx;
-	}
+	return Rcpp::exp(out);
 }
 
-Rcpp::NumericVector pcmp_cpp(const Rcpp::NumericVector& x,
-	const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu,
-	double tol, double ymax)
+// This method will not work for large lambda and small nu... the magnitudes
+// of the numbers will become extremely large, and we won't be able to enumerate
+// them.
+Rcpp::NumericVector q_cmp(const Rcpp::NumericVector& logq, double lambda,
+	double nu, double hybrid_tol, double truncate_tol, double ymax)
 {
-	unsigned int n = x.size();
-	Rcpp::NumericVector Fx(n);
-	Fx.fill(0);
-	
-	if (lambda.size() == 1 && nu.size() == 1) {
-		Rcpp::NumericVector all_logprobs = cmp_allprobs(lambda(0), nu(0), tol, true, ymax);
-		Rcpp::NumericVector lcp = logcumprobs(all_logprobs);
-		for (unsigned int i = 0; i < n; i++) {
-			if (x(i) <= all_logprobs.size() - 1) {
-				Fx(i) = lcp(x(i));
-			}
-		}
-	} else if (lambda.size() == n && nu.size() == n) {
-		for (unsigned int i = 0; i < n; i++) {
-			Rcpp::NumericVector all_logprobs = cmp_allprobs(lambda(i), nu(i), tol, true, ymax);
-			Rcpp::NumericVector lcp = logcumprobs(all_logprobs);
-			if (x(i) <= all_logprobs.size() - 1) {
-				Fx(i) = lcp(x(i));
-			}
-		}
-	} else {
-		Rcpp::stop("lambda and nu must both have length n or 1");
+	// Since we're using the truncated method below, we'll compute the normcost by
+	// truncation too. We can use the same call to get our upper truncation bound.
+	const std::pair<double, unsigned int>& ret_pair = truncate(lambda, nu,
+		truncate_tol, ymax);
+	double lnormconst = ret_pair.first;
+	unsigned int M = ret_pair.second;
+
+	double logq_max = Rcpp::max(logq);
+	std::vector<double> all_lcp_vec;
+
+	// Compute all of the probabilities we'll need, on the log-scale.
+	// Initialize with f(0).
+	double lcp = -lnormconst;
+	all_lcp_vec.push_back(lcp);
+
+	for (unsigned int j = 1; j <= M; j++) {
+		// Do summation on the log-scale.
+		double lp = j*log(lambda) - nu*lgamma(j+1) - lnormconst;
+		lcp = logadd(lcp, lp);
+		all_lcp_vec.push_back(lcp);
+
+	 	if (j % 10000 == 0) {
+	 		R_CheckUserInterrupt();
+	 	}
+
+	 	if (lcp > logq_max) {
+	 		break;
+	 	}
 	}
 
-	return exp(Fx);
-}
+	Rcpp::NumericVector all_lcp(all_lcp_vec.begin(), all_lcp_vec.end());
 
-// Assume that quantiles q are given on the log scale
-// Work on the log-scale for stability
-Rcpp::NumericVector qcmp_cpp(const Rcpp::NumericVector& logq,
-	const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu,
-	double tol, double ymax)
-{
 	unsigned int n = logq.size();
-	Rcpp::NumericVector x(n);
-	
-	if (lambda.size() == 1 && nu.size() == 1) {
-		Rcpp::NumericVector all_logprobs = cmp_allprobs(lambda(0), nu(0), tol, true, ymax);	
-		for (unsigned int i = 0; i < n; i++) {
-			x(i) = qdiscrete(logq(i), all_logprobs, true);
-		}
-	} else if (lambda.size() == n && nu.size() == n) {
-		for (unsigned int i = 0; i < n; i++) {
-			Rcpp::NumericVector all_logprobs = cmp_allprobs(lambda(i), nu(i), tol, true, ymax);
-			x(i) = qdiscrete(logq(i), all_logprobs, true);
-		}
-	} else {
-		Rcpp::stop("lambda and nu must both have length n or 1");
+	Rcpp::NumericVector out(n);
+	for (unsigned int i = 0; i < n; i++) {
+		out(i) = q_discrete(logq(i), all_lcp);
 	}
 
-	return x;
+	return out;
 }
 
-// Produce n(i) iid draws for each lambda(i) and nu(i).
-// If n is a scalar, take n(i) to be n
-Rcpp::NumericVector rcmp_cpp(unsigned int n, const Rcpp::NumericVector& lambda,
-	const Rcpp::NumericVector& nu, double tol, double ymax)
+Rcpp::NumericVector r_cmp(unsigned int n, double lambda, double nu,
+	double hybrid_tol, double truncate_tol, double ymax)
 {
-	Rcpp::NumericVector u = Rcpp::runif(n, 0.0, 1.0);
-	return qcmp_cpp(log(u), lambda, nu, tol, ymax);
+	const Rcpp::NumericVector& u = Rcpp::runif(n, 0.0, 1.0);
+	return q_cmp(Rcpp::log(u), lambda, nu, hybrid_tol, truncate_tol, ymax);
 }

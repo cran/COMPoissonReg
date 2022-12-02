@@ -17,10 +17,14 @@ the documentation of the particular methods for details of what is
 produced by that method.
 }
 \description{
+(Deprecated)
 A generic function for the dispersion parameter estimate from the results
 of various model fitting functions. The function invokes particular methods
 which depend on the class of the first argument.
 }
 \details{
 See the documentation of the particular methods for details.
+}
+\seealso{
+predict
 }

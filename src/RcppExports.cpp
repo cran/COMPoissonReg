@@ -5,155 +5,102 @@
 
 using namespace Rcpp;
 
-// cmp_allprobs
-Rcpp::NumericVector cmp_allprobs(double lambda, double nu, double tol, bool take_log, double ymax, bool normalize);
-RcppExport SEXP _COMPoissonReg_cmp_allprobs(SEXP lambdaSEXP, SEXP nuSEXP, SEXP tolSEXP, SEXP take_logSEXP, SEXP ymaxSEXP, SEXP normalizeSEXP) {
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
+// loglik_cmp
+double loglik_cmp(const Rcpp::NumericVector& x, const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, double hybrid_tol, double truncate_tol, double ymax);
+RcppExport SEXP _COMPoissonReg_loglik_cmp(SEXP xSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP hybrid_tolSEXP, SEXP truncate_tolSEXP, SEXP ymaxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type x(xSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
+    Rcpp::traits::input_parameter< double >::type hybrid_tol(hybrid_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type truncate_tol(truncate_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
+    rcpp_result_gen = Rcpp::wrap(loglik_cmp(x, lambda, nu, hybrid_tol, truncate_tol, ymax));
+    return rcpp_result_gen;
+END_RCPP
+}
+// d_cmp
+Rcpp::NumericVector d_cmp(const Rcpp::NumericVector& x, double lambda, double nu, bool take_log, bool normalize, double hybrid_tol, double truncate_tol, double ymax);
+RcppExport SEXP _COMPoissonReg_d_cmp(SEXP xSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP take_logSEXP, SEXP normalizeSEXP, SEXP hybrid_tolSEXP, SEXP truncate_tolSEXP, SEXP ymaxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type x(xSEXP);
     Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< bool >::type take_log(take_logSEXP);
-    Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
     Rcpp::traits::input_parameter< bool >::type normalize(normalizeSEXP);
-    rcpp_result_gen = Rcpp::wrap(cmp_allprobs(lambda, nu, tol, take_log, ymax, normalize));
+    Rcpp::traits::input_parameter< double >::type hybrid_tol(hybrid_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type truncate_tol(truncate_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
+    rcpp_result_gen = Rcpp::wrap(d_cmp(x, lambda, nu, take_log, normalize, hybrid_tol, truncate_tol, ymax));
     return rcpp_result_gen;
 END_RCPP
 }
-// dcmp_cpp
-Rcpp::NumericVector dcmp_cpp(const Rcpp::NumericVector& x, const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, double tol, bool take_log, double ymax);
-RcppExport SEXP _COMPoissonReg_dcmp_cpp(SEXP xSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP tolSEXP, SEXP take_logSEXP, SEXP ymaxSEXP) {
+// p_cmp
+Rcpp::NumericVector p_cmp(const Rcpp::NumericVector& x, double lambda, double nu, double hybrid_tol, double truncate_tol, double ymax);
+RcppExport SEXP _COMPoissonReg_p_cmp(SEXP xSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP hybrid_tolSEXP, SEXP truncate_tolSEXP, SEXP ymaxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type x(xSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type lambda(lambdaSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    Rcpp::traits::input_parameter< bool >::type take_log(take_logSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
+    Rcpp::traits::input_parameter< double >::type hybrid_tol(hybrid_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type truncate_tol(truncate_tolSEXP);
     Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
-    rcpp_result_gen = Rcpp::wrap(dcmp_cpp(x, lambda, nu, tol, take_log, ymax));
+    rcpp_result_gen = Rcpp::wrap(p_cmp(x, lambda, nu, hybrid_tol, truncate_tol, ymax));
     return rcpp_result_gen;
 END_RCPP
 }
-// pcmp_cpp
-Rcpp::NumericVector pcmp_cpp(const Rcpp::NumericVector& x, const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, double tol, double ymax);
-RcppExport SEXP _COMPoissonReg_pcmp_cpp(SEXP xSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP tolSEXP, SEXP ymaxSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type x(xSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type lambda(lambdaSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
-    rcpp_result_gen = Rcpp::wrap(pcmp_cpp(x, lambda, nu, tol, ymax));
-    return rcpp_result_gen;
-END_RCPP
-}
-// qcmp_cpp
-Rcpp::NumericVector qcmp_cpp(const Rcpp::NumericVector& logq, const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, double tol, double ymax);
-RcppExport SEXP _COMPoissonReg_qcmp_cpp(SEXP logqSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP tolSEXP, SEXP ymaxSEXP) {
+// q_cmp
+Rcpp::NumericVector q_cmp(const Rcpp::NumericVector& logq, double lambda, double nu, double hybrid_tol, double truncate_tol, double ymax);
+RcppExport SEXP _COMPoissonReg_q_cmp(SEXP logqSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP hybrid_tolSEXP, SEXP truncate_tolSEXP, SEXP ymaxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type logq(logqSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type lambda(lambdaSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
+    Rcpp::traits::input_parameter< double >::type hybrid_tol(hybrid_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type truncate_tol(truncate_tolSEXP);
     Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
-    rcpp_result_gen = Rcpp::wrap(qcmp_cpp(logq, lambda, nu, tol, ymax));
+    rcpp_result_gen = Rcpp::wrap(q_cmp(logq, lambda, nu, hybrid_tol, truncate_tol, ymax));
     return rcpp_result_gen;
 END_RCPP
 }
-// rcmp_cpp
-Rcpp::NumericVector rcmp_cpp(unsigned int n, const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, double tol, double ymax);
-RcppExport SEXP _COMPoissonReg_rcmp_cpp(SEXP nSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP tolSEXP, SEXP ymaxSEXP) {
+// r_cmp
+Rcpp::NumericVector r_cmp(unsigned int n, double lambda, double nu, double hybrid_tol, double truncate_tol, double ymax);
+RcppExport SEXP _COMPoissonReg_r_cmp(SEXP nSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP hybrid_tolSEXP, SEXP truncate_tolSEXP, SEXP ymaxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< unsigned int >::type n(nSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type lambda(lambdaSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
+    Rcpp::traits::input_parameter< double >::type hybrid_tol(hybrid_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type truncate_tol(truncate_tolSEXP);
     Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcmp_cpp(n, lambda, nu, tol, ymax));
+    rcpp_result_gen = Rcpp::wrap(r_cmp(n, lambda, nu, hybrid_tol, truncate_tol, ymax));
     return rcpp_result_gen;
 END_RCPP
 }
-// qdiscrete
-double qdiscrete(double q, const Rcpp::NumericVector& p, bool log_scale);
-RcppExport SEXP _COMPoissonReg_qdiscrete(SEXP qSEXP, SEXP pSEXP, SEXP log_scaleSEXP) {
+// q_discrete
+unsigned int q_discrete(double q, const Rcpp::NumericVector& cp);
+RcppExport SEXP _COMPoissonReg_q_discrete(SEXP qSEXP, SEXP cpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< double >::type q(qSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type p(pSEXP);
-    Rcpp::traits::input_parameter< bool >::type log_scale(log_scaleSEXP);
-    rcpp_result_gen = Rcpp::wrap(qdiscrete(q, p, log_scale));
-    return rcpp_result_gen;
-END_RCPP
-}
-// logsumprobs
-double logsumprobs(const Rcpp::NumericVector& logprob, unsigned int baseidx);
-RcppExport SEXP _COMPoissonReg_logsumprobs(SEXP logprobSEXP, SEXP baseidxSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type logprob(logprobSEXP);
-    Rcpp::traits::input_parameter< unsigned int >::type baseidx(baseidxSEXP);
-    rcpp_result_gen = Rcpp::wrap(logsumprobs(logprob, baseidx));
-    return rcpp_result_gen;
-END_RCPP
-}
-// logcumprobs
-Rcpp::NumericVector logcumprobs(const Rcpp::NumericVector& logprob);
-RcppExport SEXP _COMPoissonReg_logcumprobs(SEXP logprobSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type logprob(logprobSEXP);
-    rcpp_result_gen = Rcpp::wrap(logcumprobs(logprob));
-    return rcpp_result_gen;
-END_RCPP
-}
-// z_prodj
-Rcpp::NumericVector z_prodj(const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, unsigned int max);
-RcppExport SEXP _COMPoissonReg_z_prodj(SEXP lambdaSEXP, SEXP nuSEXP, SEXP maxSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type lambda(lambdaSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< unsigned int >::type max(maxSEXP);
-    rcpp_result_gen = Rcpp::wrap(z_prodj(lambda, nu, max));
-    return rcpp_result_gen;
-END_RCPP
-}
-// z_prodj2
-Rcpp::NumericVector z_prodj2(const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, unsigned int max);
-RcppExport SEXP _COMPoissonReg_z_prodj2(SEXP lambdaSEXP, SEXP nuSEXP, SEXP maxSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type lambda(lambdaSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< unsigned int >::type max(maxSEXP);
-    rcpp_result_gen = Rcpp::wrap(z_prodj2(lambda, nu, max));
-    return rcpp_result_gen;
-END_RCPP
-}
-// z_prodjlogj
-Rcpp::NumericVector z_prodjlogj(const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, unsigned int max);
-RcppExport SEXP _COMPoissonReg_z_prodjlogj(SEXP lambdaSEXP, SEXP nuSEXP, SEXP maxSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type lambda(lambdaSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< unsigned int >::type max(maxSEXP);
-    rcpp_result_gen = Rcpp::wrap(z_prodjlogj(lambda, nu, max));
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type cp(cpSEXP);
+    rcpp_result_gen = Rcpp::wrap(q_discrete(q, cp));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -170,22 +117,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// z_prodlogj2
-Rcpp::NumericVector z_prodlogj2(const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, unsigned int max);
-RcppExport SEXP _COMPoissonReg_z_prodlogj2(SEXP lambdaSEXP, SEXP nuSEXP, SEXP maxSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type lambda(lambdaSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< unsigned int >::type max(maxSEXP);
-    rcpp_result_gen = Rcpp::wrap(z_prodlogj2(lambda, nu, max));
-    return rcpp_result_gen;
-END_RCPP
-}
-// z_exact
-Rcpp::NumericVector z_exact(const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, double tol, bool take_log, double ymax);
-RcppExport SEXP _COMPoissonReg_z_exact(SEXP lambdaSEXP, SEXP nuSEXP, SEXP tolSEXP, SEXP take_logSEXP, SEXP ymaxSEXP) {
+// z_trunc
+Rcpp::NumericVector z_trunc(const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, double tol, bool take_log, double ymax);
+RcppExport SEXP _COMPoissonReg_z_trunc(SEXP lambdaSEXP, SEXP nuSEXP, SEXP tolSEXP, SEXP take_logSEXP, SEXP ymaxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -194,7 +128,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< bool >::type take_log(take_logSEXP);
     Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
-    rcpp_result_gen = Rcpp::wrap(z_exact(lambda, nu, tol, take_log, ymax));
+    rcpp_result_gen = Rcpp::wrap(z_trunc(lambda, nu, tol, take_log, ymax));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -212,54 +146,103 @@ BEGIN_RCPP
 END_RCPP
 }
 // z_hybrid
-Rcpp::NumericVector z_hybrid(const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, bool take_log, double tol1, double tol2);
-RcppExport SEXP _COMPoissonReg_z_hybrid(SEXP lambdaSEXP, SEXP nuSEXP, SEXP take_logSEXP, SEXP tol1SEXP, SEXP tol2SEXP) {
+Rcpp::NumericVector z_hybrid(const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, bool take_log, double hybrid_tol, double truncate_tol, double ymax);
+RcppExport SEXP _COMPoissonReg_z_hybrid(SEXP lambdaSEXP, SEXP nuSEXP, SEXP take_logSEXP, SEXP hybrid_tolSEXP, SEXP truncate_tolSEXP, SEXP ymaxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
     Rcpp::traits::input_parameter< bool >::type take_log(take_logSEXP);
-    Rcpp::traits::input_parameter< double >::type tol1(tol1SEXP);
-    Rcpp::traits::input_parameter< double >::type tol2(tol2SEXP);
-    rcpp_result_gen = Rcpp::wrap(z_hybrid(lambda, nu, take_log, tol1, tol2));
+    Rcpp::traits::input_parameter< double >::type hybrid_tol(hybrid_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type truncate_tol(truncate_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
+    rcpp_result_gen = Rcpp::wrap(z_hybrid(lambda, nu, take_log, hybrid_tol, truncate_tol, ymax));
     return rcpp_result_gen;
 END_RCPP
 }
-// qzicmp_cpp
-Rcpp::NumericVector qzicmp_cpp(const Rcpp::NumericVector& logq, const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, const Rcpp::NumericVector& p, double tol);
-RcppExport SEXP _COMPoissonReg_qzicmp_cpp(SEXP logqSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP pSEXP, SEXP tolSEXP) {
+// y_trunc
+Rcpp::IntegerVector y_trunc(const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, double tol, double ymax);
+RcppExport SEXP _COMPoissonReg_y_trunc(SEXP lambdaSEXP, SEXP nuSEXP, SEXP tolSEXP, SEXP ymaxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
+    rcpp_result_gen = Rcpp::wrap(y_trunc(lambda, nu, tol, ymax));
+    return rcpp_result_gen;
+END_RCPP
+}
+// loglik_zicmp
+double loglik_zicmp(const Rcpp::IntegerVector& x, const Rcpp::NumericVector& lambda, const Rcpp::NumericVector& nu, const Rcpp::NumericVector& p, double hybrid_tol, double truncate_tol, double ymax);
+RcppExport SEXP _COMPoissonReg_loglik_zicmp(SEXP xSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP pSEXP, SEXP hybrid_tolSEXP, SEXP truncate_tolSEXP, SEXP ymaxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type x(xSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type p(pSEXP);
+    Rcpp::traits::input_parameter< double >::type hybrid_tol(hybrid_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type truncate_tol(truncate_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
+    rcpp_result_gen = Rcpp::wrap(loglik_zicmp(x, lambda, nu, p, hybrid_tol, truncate_tol, ymax));
+    return rcpp_result_gen;
+END_RCPP
+}
+// d_zicmp
+Rcpp::NumericVector d_zicmp(const Rcpp::IntegerVector& x, double lambda, double nu, double p, bool take_log, double hybrid_tol, double truncate_tol, double ymax);
+RcppExport SEXP _COMPoissonReg_d_zicmp(SEXP xSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP pSEXP, SEXP take_logSEXP, SEXP hybrid_tolSEXP, SEXP truncate_tolSEXP, SEXP ymaxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type x(xSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
+    Rcpp::traits::input_parameter< double >::type p(pSEXP);
+    Rcpp::traits::input_parameter< bool >::type take_log(take_logSEXP);
+    Rcpp::traits::input_parameter< double >::type hybrid_tol(hybrid_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type truncate_tol(truncate_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
+    rcpp_result_gen = Rcpp::wrap(d_zicmp(x, lambda, nu, p, take_log, hybrid_tol, truncate_tol, ymax));
+    return rcpp_result_gen;
+END_RCPP
+}
+// q_zicmp
+Rcpp::NumericVector q_zicmp(const Rcpp::NumericVector& logq, double lambda, double nu, double p, double hybrid_tol, double truncate_tol, double ymax);
+RcppExport SEXP _COMPoissonReg_q_zicmp(SEXP logqSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP pSEXP, SEXP hybrid_tolSEXP, SEXP truncate_tolSEXP, SEXP ymaxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type logq(logqSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type lambda(lambdaSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type p(pSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(qzicmp_cpp(logq, lambda, nu, p, tol));
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
+    Rcpp::traits::input_parameter< double >::type p(pSEXP);
+    Rcpp::traits::input_parameter< double >::type hybrid_tol(hybrid_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type truncate_tol(truncate_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type ymax(ymaxSEXP);
+    rcpp_result_gen = Rcpp::wrap(q_zicmp(logq, lambda, nu, p, hybrid_tol, truncate_tol, ymax));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_COMPoissonReg_cmp_allprobs", (DL_FUNC) &_COMPoissonReg_cmp_allprobs, 6},
-    {"_COMPoissonReg_dcmp_cpp", (DL_FUNC) &_COMPoissonReg_dcmp_cpp, 6},
-    {"_COMPoissonReg_pcmp_cpp", (DL_FUNC) &_COMPoissonReg_pcmp_cpp, 5},
-    {"_COMPoissonReg_qcmp_cpp", (DL_FUNC) &_COMPoissonReg_qcmp_cpp, 5},
-    {"_COMPoissonReg_rcmp_cpp", (DL_FUNC) &_COMPoissonReg_rcmp_cpp, 5},
-    {"_COMPoissonReg_qdiscrete", (DL_FUNC) &_COMPoissonReg_qdiscrete, 3},
-    {"_COMPoissonReg_logsumprobs", (DL_FUNC) &_COMPoissonReg_logsumprobs, 2},
-    {"_COMPoissonReg_logcumprobs", (DL_FUNC) &_COMPoissonReg_logcumprobs, 1},
-    {"_COMPoissonReg_z_prodj", (DL_FUNC) &_COMPoissonReg_z_prodj, 3},
-    {"_COMPoissonReg_z_prodj2", (DL_FUNC) &_COMPoissonReg_z_prodj2, 3},
-    {"_COMPoissonReg_z_prodjlogj", (DL_FUNC) &_COMPoissonReg_z_prodjlogj, 3},
+    {"_COMPoissonReg_loglik_cmp", (DL_FUNC) &_COMPoissonReg_loglik_cmp, 6},
+    {"_COMPoissonReg_d_cmp", (DL_FUNC) &_COMPoissonReg_d_cmp, 8},
+    {"_COMPoissonReg_p_cmp", (DL_FUNC) &_COMPoissonReg_p_cmp, 6},
+    {"_COMPoissonReg_q_cmp", (DL_FUNC) &_COMPoissonReg_q_cmp, 6},
+    {"_COMPoissonReg_r_cmp", (DL_FUNC) &_COMPoissonReg_r_cmp, 6},
+    {"_COMPoissonReg_q_discrete", (DL_FUNC) &_COMPoissonReg_q_discrete, 2},
     {"_COMPoissonReg_z_prodlogj", (DL_FUNC) &_COMPoissonReg_z_prodlogj, 3},
-    {"_COMPoissonReg_z_prodlogj2", (DL_FUNC) &_COMPoissonReg_z_prodlogj2, 3},
-    {"_COMPoissonReg_z_exact", (DL_FUNC) &_COMPoissonReg_z_exact, 5},
+    {"_COMPoissonReg_z_trunc", (DL_FUNC) &_COMPoissonReg_z_trunc, 5},
     {"_COMPoissonReg_z_approx", (DL_FUNC) &_COMPoissonReg_z_approx, 3},
-    {"_COMPoissonReg_z_hybrid", (DL_FUNC) &_COMPoissonReg_z_hybrid, 5},
-    {"_COMPoissonReg_qzicmp_cpp", (DL_FUNC) &_COMPoissonReg_qzicmp_cpp, 5},
+    {"_COMPoissonReg_z_hybrid", (DL_FUNC) &_COMPoissonReg_z_hybrid, 6},
+    {"_COMPoissonReg_y_trunc", (DL_FUNC) &_COMPoissonReg_y_trunc, 4},
+    {"_COMPoissonReg_loglik_zicmp", (DL_FUNC) &_COMPoissonReg_loglik_zicmp, 7},
+    {"_COMPoissonReg_d_zicmp", (DL_FUNC) &_COMPoissonReg_d_zicmp, 8},
+    {"_COMPoissonReg_q_zicmp", (DL_FUNC) &_COMPoissonReg_q_zicmp, 7},
     {NULL, NULL, 0}
 };
 

@@ -6,15 +6,27 @@
 \alias{rcmp}
 \alias{pcmp}
 \alias{qcmp}
+\alias{ecmp}
+\alias{vcmp}
+\alias{ncmp}
+\alias{tcmp}
 \title{COM-Poisson Distribution}
 \usage{
-dcmp(x, lambda, nu, log = FALSE)
+dcmp(x, lambda, nu, log = FALSE, control = NULL)
 
-rcmp(n, lambda, nu)
+rcmp(n, lambda, nu, control = NULL)
 
-pcmp(x, lambda, nu)
+pcmp(x, lambda, nu, control = NULL)
 
-qcmp(q, lambda, nu, log.p = FALSE)
+qcmp(q, lambda, nu, log.p = FALSE, control = NULL)
+
+ecmp(lambda, nu, control = NULL)
+
+vcmp(lambda, nu, control = NULL)
+
+ncmp(lambda, nu, log = FALSE, control = NULL)
+
+tcmp(lambda, nu, control = NULL)
 }
 \arguments{
 \item{x}{vector of quantiles.}
@@ -25,6 +37,9 @@ qcmp(q, lambda, nu, log.p = FALSE)
 
 \item{log}{logical; if TRUE, probabilities are returned on log-scale.}
 
+\item{control}{a \code{COMPoissonReg.control} object from \code{get.control}
+or \code{NULL} to use global default.}
+
 \item{n}{number of observations.}
 
 \item{q}{vector of probabilities.}
@@ -32,11 +47,16 @@ qcmp(q, lambda, nu, log.p = FALSE)
 \item{log.p}{logical; if TRUE, probabilities \code{p} are given as \eqn{\log(p)}.}
 }
 \value{
-\itemize{
-\item \code{dcmp} gives the density,
-\item \code{pcmp} gives the cumulative probability,
-\item \code{qcmp} gives the quantile function, and
-\item \code{rcmp} generates random values.
+\describe{
+\item{dcmp}{density,}
+\item{pcmp}{cumulative probability,}
+\item{qcmp}{quantiles,}
+\item{rcmp}{generate random variates,}
+\item{ecmp}{expected value,}
+\item{vcmp}{variance,}
+\item{ncmp}{value of the normalizing constant, and}
+\item{tcmp}{upper value used to compute the normalizing constant under
+truncation method.}
 }
 }
 \description{

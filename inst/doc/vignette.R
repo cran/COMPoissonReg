@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   prompt = TRUE,
@@ -44,7 +44,7 @@ tcmp(lambda = 1.5, nu = nu_seq, control = get.control(ymax = 3e6))
 ## -----------------------------------------------------------------------------
 tcmp(lambda = 1.2, nu = 0.03, control = get.control(ymax = 1200))
 
-## ---- prompt = FALSE----------------------------------------------------------
+## ----prompt = FALSE-----------------------------------------------------------
 library(ggplot2)
 
 nu_seq = seq(0.03, 1.5, length.out = 20)
@@ -52,7 +52,7 @@ nc1 = ncmp(lambda = 0.5, nu = nu_seq, log = TRUE)
 nc2 = ncmp(lambda = 1.05, nu = nu_seq, log = TRUE)
 nc3 = ncmp(lambda = 1.20, nu = nu_seq, log = TRUE)
 
-## ---- fig.width = 5, fig.height = 3, fig.align = "center", prompt = FALSE, fig.cap = "Log of normalizing constant for $\\lambda = 0.5$ ($\\circ$), $\\lambda = 1.05$ ($\\Delta$), and $\\lambda = 1.20$ ($+$)."----
+## ----fig.width = 5, fig.height = 3, fig.align = "center", prompt = FALSE, fig.cap = "Log of normalizing constant for $\\lambda = 0.5$ ($\\circ$), $\\lambda = 1.05$ ($\\Delta$), and $\\lambda = 1.20$ ($+$)."----
 
 ggplot() +
 	geom_point(data = data.frame(x = nu_seq, y = nc1), aes(x = x, y = y), pch = 1) +
@@ -85,7 +85,7 @@ tryCatch({
 	qcmp(0.9999999, lambda = 1.5, nu = 0.5)
 }, warning = print_warning)
 
-## ---- fig.width = 3, fig.height = 3, fig.align = "center", prompt = FALSE, fig.show = "hold"----
+## ----fig.width = 3, fig.height = 3, fig.align = "center", prompt = FALSE, fig.show = "hold"----
 library(ggplot2)
 
 n = 100000
@@ -102,7 +102,7 @@ qx = qcmp(qq, lambda, nu)
 
 qx_emp = quantile(x, probs = qq)
 
-## ---- fig.width = 3, fig.height = 3, prompt = FALSE, fig.cap = "Empirical density of draws (histogram) versus density computed via the dcmp function (points)."----
+## ----fig.width = 3, fig.height = 3, prompt = FALSE, fig.cap = "Empirical density of draws (histogram) versus density computed via the dcmp function (points)."----
 ggplot() +
 	geom_bar(data = data.frame(x = x), aes(x = x, y = ..prop..), fill = "NA",
 		col = "black") +
@@ -110,14 +110,14 @@ ggplot() +
 	ylab("Density") +
 	theme_bw()
 
-## ---- fig.width = 3, fig.height = 3, prompt = FALSE, fig.cap = "Empirical CDF of draws (solid line) versus CDF computed via the pcmp function (points)."----
+## ----fig.width = 3, fig.height = 3, prompt = FALSE, fig.cap = "Empirical CDF of draws (solid line) versus CDF computed via the pcmp function (points)."----
 ggplot() +
 	stat_ecdf(data = data.frame(x = x), aes(x), geom = "step") +
 	geom_point(data = data.frame(x = xx, px = px), aes(x, px)) +
 	ylab("Probability") +
 	theme_bw()
 
-## ---- fig.width = 3, fig.height = 3, prompt = FALSE, fig.cap = "Empirical quantiles of draws (`o`) versus quantiles computed via the qcmp function (`+`)."----
+## ----fig.width = 3, fig.height = 3, prompt = FALSE, fig.cap = "Empirical quantiles of draws (`o`) versus quantiles computed via the qcmp function (`+`)."----
 ggplot() +
 	geom_point(data = data.frame(x = qq, qx_emp = qx_emp), aes(qq, qx_emp), pch = 1) +
 	geom_point(data = data.frame(x = qq, qx = qx), aes(qq, qx), pch = 3) +
@@ -158,7 +158,7 @@ tryCatch({
 	qzicmp(0.9999999, lambda = 1.5, nu = 0.5, p = 0.5)
 }, warning = print_warning)
 
-## ---- fig.width = 3, fig.height = 3, fig.align = "center", prompt = FALSE, fig.show = "hold"----
+## ----fig.width = 3, fig.height = 3, fig.align = "center", prompt = FALSE, fig.show = "hold"----
 library(ggplot2)
 
 n = 100000
@@ -176,7 +176,7 @@ qx = qzicmp(qq, lambda, nu, p)
 
 qx_emp = quantile(x, probs = qq)
 
-## ---- fig.width = 3, fig.height = 3, prompt = FALSE, fig.cap = "Empirical density of draws (histogram) versus density computed via the dzicmp function (points)."----
+## ----fig.width = 3, fig.height = 3, prompt = FALSE, fig.cap = "Empirical density of draws (histogram) versus density computed via the dzicmp function (points)."----
 ggplot() +
 	geom_bar(data = data.frame(x = x), aes(x = x, y = ..prop..), fill = "NA",
 		col = "black") +
@@ -184,14 +184,14 @@ ggplot() +
 	ylab("Density") +
 	theme_bw()
 
-## ---- fig.width = 3, fig.height = 3, prompt = FALSE, fig.cap = "Empirical CDF of draws (solid line) versus CDF computed via the pzicmp function (points)."----
+## ----fig.width = 3, fig.height = 3, prompt = FALSE, fig.cap = "Empirical CDF of draws (solid line) versus CDF computed via the pzicmp function (points)."----
 ggplot() +
 	stat_ecdf(data = data.frame(x = x), aes(x), geom = "step") +
 	geom_point(data = data.frame(x = xx, px = px), aes(x, px)) +
 	ylab("Probability") +
 	theme_bw()
 
-## ---- fig.width = 3, fig.height = 3, prompt = FALSE, fig.cap = "Empirical quantiles of draws (`o`) versus quantiles computed via the qzicmp function (`+`)."----
+## ----fig.width = 3, fig.height = 3, prompt = FALSE, fig.cap = "Empirical quantiles of draws (`o`) versus quantiles computed via the qzicmp function (`+`)."----
 ggplot() +
 	geom_point(data = data.frame(x = qq, qx_emp = qx_emp), aes(qq, qx_emp), pch = 1) +
 	geom_point(data = data.frame(x = qq, qx = qx), aes(qq, qx), pch = 3) +
@@ -207,7 +207,7 @@ ezicmp(lambda = 1.5, nu = 0.5, p = c(0.1, 0.2, 0.5))
 vzicmp(lambda = 1.5, nu = 0.5, p = 0.1)
 vzicmp(lambda = 1.5, nu = 0.5, p = c(0.1, 0.2, 0.5))
 
-## ---- eval = FALSE, prompt = FALSE--------------------------------------------
+## ----eval = FALSE, prompt = FALSE---------------------------------------------
 #  out = glm.cmp(formula.lambda, formula.nu = ~ 1, formula.p = NULL,
 #  	data = NULL, init = NULL, fixed = NULL, control = NULL, ...)
 
@@ -218,7 +218,7 @@ get.init.zero(d1 = 3, d2 = 2, d3 = 2)
 ## -----------------------------------------------------------------------------
 get.fixed(beta = c(1L, 2L), gamma = c(1L))
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  model.matrix(formula.lambda, data = data)
 #  model.matrix(formula.nu, data = data)
 #  model.matrix(formula.p, data = data)
@@ -248,18 +248,18 @@ print(cmp2.out)
 control = get.control(optim.control = list(maxit = 5, trace = 3, REPORT = 1))
 cmp3.out = glm.cmp(broken ~ transfers, data = freight, control = control)
 
-## ---- results = 'hide'--------------------------------------------------------
+## ----results = 'hide'---------------------------------------------------------
 y = freight$broken
 x = freight$transfers
 glm.cmp(y ~ x)
 
-## ---- results = 'hide'--------------------------------------------------------
+## ----results = 'hide'---------------------------------------------------------
 freight$offx = 13
 freight$offs = 1
 glm.cmp(broken ~ transfers + offset(offx), data = freight)
 glm.cmp(broken ~ transfers + offset(offx), formula.nu = ~1 + offset(offs), data = freight)
 
-## ---- results = 'hide'--------------------------------------------------------
+## ----results = 'hide'---------------------------------------------------------
 y = freight$broken
 X = model.matrix(~ transfers, data = freight)
 S = model.matrix(~ 1, data = freight)
@@ -280,7 +280,7 @@ sdev(cmp.out, type = "list")  ## Standard deviations as a named list
 predict(cmp.out)
 predict(cmp.out, type = "link")
 
-## ---- fig.width = 3, fig.height = 3, fig.align = "center", prompt=FALSE-------
+## ----fig.width = 3, fig.height = 3, fig.align = "center", prompt=FALSE--------
 # Prepare new data to fit by formula interface
 new.df = data.frame(transfers = 0:10)
 
@@ -322,7 +322,7 @@ vv = vcmp(link.hat$lambda, link.hat$nu)
 hh = leverage(cmp.out)
 res.pearson = res.raw / sqrt(vv*(1-hh))
 
-## ---- fig.width = 3, fig.height = 3, fig.align = "center", prompt = FALSE, fig.show = "hold"----
+## ----fig.width = 3, fig.height = 3, fig.align = "center", prompt = FALSE, fig.show = "hold"----
 plot.fit.res = function(y.hat, res) {
 	ggplot(data.frame(y = y.hat, res = res)) +
 		geom_point(aes(y, res)) +
@@ -373,7 +373,7 @@ head(cmp.boot)
 ## -----------------------------------------------------------------------------
 t(apply(cmp.boot, 2, quantile, c(0.025,0.975)))
 
-## ---- prompt=FALSE------------------------------------------------------------
+## ----prompt=FALSE-------------------------------------------------------------
 set.seed(1234)
 n = 200
 x = rnorm(n, 500, 10)
@@ -407,7 +407,7 @@ suppressWarnings({
 	print(cmp.out)
 })
 
-## ---- prompt=FALSE------------------------------------------------------------
+## ----prompt=FALSE-------------------------------------------------------------
 set.seed(1234)
 n = 200
 x = runif(n, 1, 2)
@@ -455,7 +455,7 @@ print(zicmp0.out)
 pred.out = predict(zicmp0.out, type = "link")
 summary(pred.out$lambda)
 
-## ---- prompt=FALSE------------------------------------------------------------
+## ----prompt=FALSE-------------------------------------------------------------
 library(numDeriv)
 g = function(gamma0) {
 	-ncmp(lambda = exp(-0.25), nu = exp(gamma0), log = TRUE)
@@ -471,7 +471,7 @@ for (j in 1:nrow(dat)) {
 ## -----------------------------------------------------------------------------
 print(dat)
 
-## ---- prompt=FALSE------------------------------------------------------------
+## ----prompt=FALSE-------------------------------------------------------------
 init = coef(zicmp0.out, type = "list")
 y = couple$UPB
 X = model.matrix(~ EDUCATION + ANXIETY, data = couple)
@@ -505,7 +505,7 @@ link.hat = predict(zicmp.out, type = "link")
 head(y.hat)
 head(link.hat)
 
-## ---- fig.width = 3, fig.height = 3, fig.align = "center", prompt = FALSE, fig.show = "hold"----
+## ----fig.width = 3, fig.height = 3, fig.align = "center", prompt = FALSE, fig.show = "hold"----
 res.raw = residuals(zicmp.out, type = "raw")
 res.qtl = residuals(zicmp.out, type = "quantile")
 
@@ -519,7 +519,7 @@ plot.fit.res(y.hat, res.qtl) +
 plot.qq.res(res.qtl) +
 	ggtitle("Q-Q Plot of Quantile Residuals")
 
-## ---- prompt = FALSE----------------------------------------------------------
+## ----prompt = FALSE-----------------------------------------------------------
 new.df = data.frame(EDUCATION = round(1:20 / 20), ANXIETY = seq(-3,3, length.out = 20))
 X.new = model.matrix(~ EDUCATION + ANXIETY, data = new.df)
 S.new = model.matrix(~ 1, data = new.df)
@@ -537,7 +537,7 @@ y.hat.new = predict(zicmp0.out, newdata = new.df)
 ## -----------------------------------------------------------------------------
 print(y.hat.new)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  zicmp.boot = parametric.bootstrap(zicmp.out, reps = 100)
 #  head(zicmp.boot)
 #  apply(zicmp.boot, 2, quantile, c(0.025,0.975))
